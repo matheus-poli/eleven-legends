@@ -1,0 +1,17 @@
+# Godot 4
+.godot/
+*.uid
+
+# Export
+export/
+*.pck
+*.apk
+*.ipa
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
