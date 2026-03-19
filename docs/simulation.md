@@ -22,6 +22,15 @@ Sem gráfico de jogo. A partida é exibida estilo **SofaScore**:
 - Placar em tempo real
 - O técnico pode fazer substituições e mudanças táticas durante a partida
 
+### Visualização no Release — "Futebol de Botão"
+Representação gráfica 2D top-down estilo futebol de botão:
+- Campo verde visto de cima
+- Jogadores representados como **discos/botões** com face anime e número
+- Movimentação simplificada (deslizam pelo campo, não correm realisticamente)
+- Animações de ação (chute, passe, desarme) como efeitos visuais sobre os discos
+- A simulação tick a tick alimenta as posições e ações dos discos
+- O técnico continua podendo pausar, substituir e ajustar tática em tempo real
+
 ---
 
 ## 🔁 Loop de Simulação (por tick)
@@ -66,15 +75,15 @@ success_chance = attribute + chemistry_bonus + morale_bonus + trait_bonus + rng_
 
 ### RNG — Importante
 
-> **Use sempre `RandomNumberGenerator` com seed fixa por partida.** Nunca use `randf()` global.
+> **Use sempre `RandomNumberGenerator` com seed fixa por partida.** Nunca use `GD.Randf()` global.
 
-```gdscript
-# Inicialização da partida
-var rng := RandomNumberGenerator.new()
-rng.seed = match_seed  # seed derivada do match_id ou passada externamente
+```csharp
+// Inicialização da partida
+var rng = new RandomNumberGenerator();
+rng.Seed = matchSeed;  // seed derivada do matchId ou passada externamente
 
-# Uso durante simulação
-var rng_value: float = rng.randf_range(-15.0, 15.0)
+// Uso durante simulação
+float rngValue = rng.RandfRange(-15.0f, 15.0f);
 ```
 
 Isso garante que a mesma partida com a mesma seed produz sempre o mesmo resultado — essencial para testes e replay.
@@ -152,9 +161,9 @@ Dados base derivados de **scraping de dados reais** (TransferMarkt, FBref, etc.)
 
 ### Implementação
 
-```gdscript
-if trait.context_matches(current_situation):
-    success_chance += trait.bonus
+```csharp
+if (trait.ContextMatches(currentSituation))
+    successChance += trait.Bonus;
 ```
 
 ---
@@ -269,15 +278,17 @@ onde `λ` é a média de gols esperada, derivada dos ratings dos times.
 
 Dados mantidos durante a simulação:
 
-```gdscript
-class MatchState:
-    var score_home: int
-    var score_away: int
-    var possession_home: float  # 0.0–1.0
-    var current_tick: int
-    var events: Array[MatchEvent]
-    var player_ratings: Dictionary  # player_id → float
-    var player_stamina: Dictionary  # player_id → float (degrada por tick)
+```csharp
+public class MatchState
+{
+    public int ScoreHome { get; set; }
+    public int ScoreAway { get; set; }
+    public float PossessionHome { get; set; }  // 0.0–1.0
+    public int CurrentTick { get; set; }
+    public List<MatchEvent> Events { get; set; } = new();
+    public Dictionary<int, float> PlayerRatings { get; set; } = new();  // playerId → rating
+    public Dictionary<int, float> PlayerStamina { get; set; } = new();  // playerId → stamina (degrada)
+}
 ```
 
 ---
@@ -306,11 +317,13 @@ class MatchState:
 - RNG sempre injetado como parâmetro ou via dependência
 - Estado da partida é um objeto de dados simples — pode ser serializado para testes
 
-```gdscript
-# ✅ testável
-func calculate_success(attr: int, chem: float, rng: RandomNumberGenerator) -> float:
+```csharp
+// ✅ testável
+public float CalculateSuccess(int attr, float chem, RandomNumberGenerator rng) { }
 
-# ❌ não testável
-func calculate_success() -> float:
-    return randf() * some_node.attribute
+// ❌ não testável
+public float CalculateSuccess()
+{
+    return GD.Randf() * someNode.Attribute;
+}
 ```

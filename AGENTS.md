@@ -12,12 +12,13 @@ Este arquivo orienta agentes de IA (GitHub Copilot, Cursor, Claude, etc.) sobre 
 
 > No universo de Eleven Legends, o futebol se tornou a força mais poderosa da humanidade. Nações medem seu poder nos gramados. O jogador é um técnico cuja carreira determina o destino de clubes e países.
 
-- **Engine:** Godot 4 (GDScript)
+- **Engine:** Godot 4 (C#)
 - **Plataforma alvo:** PC (Itch.io para demo, Steam para release)
-- **Banco de dados:** SQLite via plugin [godot-sqlite](https://github.com/2shady4u/godot-sqlite)
+- **Banco de dados:** SQLite via Microsoft.Data.Sqlite (ecossistema .NET)
 - **Backend futuro:** Node.js (bot de stream persistente)
 - **Arte:** Aseprite (estilo anime)
 - **Dados:** Baseados em scrape de dados reais (TransferMarkt, FBref, etc.)
+- **Simulação gráfica (release):** Estilo "futebol de botão" — 2D top-down com discos e faces anime
 
 O foco inicial é **simulação de partidas sem UI gráfica de jogo** — toda lógica deve funcionar e ser testável sem depender de cenas ou nós visuais. A visualização de partida na demo é estilo SofaScore (eventos + ratings em tempo real).
 
@@ -35,7 +36,7 @@ src/
 
 tools/            # Scripts externos — scraper de dados, gerador de nomes fictícios
 docs/             # Documentação de design (não é código)
-tests/            # Testes unitários (GUT framework ou scripts nativos)
+tests/            # Testes unitários (xUnit/NUnit ou GodotSharp.Testing)
 scenes/           # Cenas Godot (.tscn) — apenas UI e apresentação
 assets/           # Recursos visuais e de áudio
 ```
@@ -44,34 +45,52 @@ assets/           # Recursos visuais e de áudio
 
 ---
 
-## ⚙️ Convenções de Código (GDScript)
+## ⚙️ Convenções de Código (C#)
 
 ### Nomenclatura
-- `snake_case` para variáveis, funções e arquivos
-- `PascalCase` para nomes de classe (`class_name`)
-- Constantes em `UPPER_SNAKE_CASE`
-- Prefixo `_` para funções e variáveis privadas
+- `PascalCase` para classes, métodos, propriedades e eventos
+- `camelCase` para variáveis locais e parâmetros
+- `_camelCase` para campos privados (prefixo `_`)
+- Constantes em `PascalCase` ou `UPPER_SNAKE_CASE`
+- Interfaces com prefixo `I` (ex: `IMatchSimulator`)
+- Arquivos com o mesmo nome da classe (`MatchSimulator.cs`)
 
 ### Tipagem
-- **Sempre use tipagem estática.** GDScript 4 suporta tipos e isso melhora performance e autocomplete.
+- **Sempre use tipos explícitos.** Evite `var` quando o tipo não é óbvio no lado direito da atribuição.
 
-```gdscript
-# ✅ correto
-var speed: float = 0.0
-func calculate_success(attribute: int, chemistry: float) -> float:
+```csharp
+// ✅ correto
+float speed = 0.0f;
+public float CalculateSuccess(int attribute, float chemistry) { }
 
-# ❌ evitar
-var speed = 0.0
-func calculate_success(attribute, chemistry):
+// ✅ var aceitável quando tipo é óbvio
+var rng = new RandomNumberGenerator();
+var players = new List<Player>();
+
+// ❌ evitar
+var result = GetSomething(); // tipo não é óbvio
 ```
 
 ### Structs / Value Objects
-- Use `class` internas ou `Resource` para representar dados de domínio (jogador, partida, evento).
-- Prefira `Resource` quando o dado precisar ser salvo/carregado.
+- Use `record` ou `class` para representar dados de domínio (jogador, partida, evento).
+- Use `Resource` (herança de Godot) quando o dado precisar ser salvo/carregado pelo engine.
+- Prefira tipos imutáveis (`record`) para dados que não mudam durante a simulação.
+
+```csharp
+// Dados imutáveis
+public record PlayerAttributes(int Finishing, int Passing, int Dribbling);
+
+// Dados mutáveis (estado de partida)
+public class MatchState {
+    public int ScoreHome { get; set; }
+    public int ScoreAway { get; set; }
+    public float PossessionHome { get; set; }
+}
+```
 
 ### Internacionalização (i18n)
-- **Todas as strings visíveis ao jogador devem usar `tr()`** desde o início.
-- Chaves de tradução em `UPPER_SNAKE_CASE`: `tr("MATCH_GOAL_SCORED")`
+- **Todas as strings visíveis ao jogador devem usar `Tr()`** desde o início.
+- Chaves de tradução em `UPPER_SNAKE_CASE`: `Tr("MATCH_GOAL_SCORED")`
 - Idiomas da demo: PT-BR + EN
 - Nunca hardcode texto visível ao jogador diretamente no código.
 
@@ -120,7 +139,7 @@ success = attribute + chemistry_bonus + morale_bonus + trait_bonus + rng
 ```
 
 - `rng` é gerado por um `RandomNumberGenerator` com **seed fixa por partida** (reproduzível)
-- Nunca use `randf()` global — sempre passe o RNG como dependência
+- Nunca use `GD.Randf()` global — sempre passe o RNG como dependência
 - Isso permite testes determinísticos
 
 ### Simulação Global (3 Níveis)
@@ -192,10 +211,10 @@ Nunca misture as duas. O técnico não pode usar `club_balance` para fins pessoa
 ## 🔴 O que NÃO fazer
 
 - **Não acople lógica de simulação a nós de cena** (`Node`, `Node2D`, etc.)
-- **Não use `randf()` global** — sempre use RNG injetado com seed
+- **Não use `GD.Randf()` global** — sempre use RNG injetado com seed
 - **Não crie tabelas SQLite sem documentar o schema em `docs/`**
 - **Não misture `club_balance` e `manager_balance`**
-- **Não hardcode strings visíveis ao jogador** — use `tr()` sempre
+- **Não hardcode strings visíveis ao jogador** — use `Tr()` sempre
 - **Não use nomes reais de jogadores/times** — sempre fictícios
 - **Não implemente mais de 32 times na demo** — escalar depois
 
@@ -206,7 +225,7 @@ Nunca misture as duas. O técnico não pode usar `club_balance` para fins pessoa
 - [ ] Tipos estáticos em todas as funções públicas?
 - [ ] Lógica de jogo em `src/`, não em cena?
 - [ ] RNG injetado (não global)?
-- [ ] Strings visíveis ao jogador usando `tr()`?
+- [ ] Strings visíveis ao jogador usando `Tr()`?
 - [ ] Há testes para a lógica nova?
 - [ ] O schema do banco está documentado se adicionou tabelas?
 - [ ] Nomes de jogadores/times são fictícios (não reais)?

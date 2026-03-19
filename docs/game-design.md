@@ -20,9 +20,10 @@ O mundo do jogo é **fictício mas baseado na realidade**: todos os jogadores, t
 |---|---|
 | **Gênero** | Football Manager + Gacha + Training Sim + Stream Integration |
 | **Estilo visual** | Anime — representação fictícia da realidade |
-| **Engine** | Godot 4 (GDScript) |
+| **Engine** | Godot 4 (C#) |
 | **Plataforma inicial** | PC (Itch.io para demo, Steam para release) |
 | **Futuro** | Steam, Switch, PS5, Mobile, Co-op local, Online |
+| **Simulação gráfica** | Release: estilo "futebol de botão" (2D top-down, discos com faces anime) |
 
 ### Referências de Design
 
@@ -33,6 +34,7 @@ O mundo do jogo é **fictício mas baseado na realidade**: todos os jogadores, t
 | **Cult of the Lamb** | Customização de aparência dos avatares de chat |
 | **SofaScore** | Visualização de partida: ratings em tempo real, timeline de eventos |
 | **DaisyUI hover-3d** | Estilo visual das cartas de jogadores |
+| **Futebol de botão** | Representação gráfica da simulação no release (2D top-down, discos anime) |
 
 ---
 
@@ -279,7 +281,7 @@ Notícias são geradas automaticamente pelo estado do jogo.
 | Treinamento | Alocação + eventos aleatórios |
 
 ### O que NÃO entra na demo
-- Gráfico de simulação (campo 2D/3D com jogadores se movendo)
+- Simulação gráfica "futebol de botão" (apenas no release)
 - Transferências completas (negociação detalhada)
 - Mundo inteiro (~195 países)
 - Seleções jogáveis
@@ -293,6 +295,7 @@ Notícias são geradas automaticamente pelo estado do jogo.
 | Área | Plano |
 |---|---|
 | Plataformas | Steam, Switch, PS5, Mobile |
+| Simulação gráfica | Estilo "futebol de botão" — 2D top-down com discos/sprites anime |
 | Multiplayer | Co-op local, leaderboards online, possível modo online |
 | Stream | Bot Node.js persistente, votações, eventos ao vivo |
 | Idiomas | Meta: máxima cobertura (pesquisar idiomas mais usados em gaming) |
@@ -307,5 +310,6 @@ Notícias são geradas automaticamente pelo estado do jogo.
 - **Jogadores:** Inicialmente sem aparência detalhada; representados por cartas com stats
 - **Cartas:** Efeito 3D hover (ref: DaisyUI hover-3d), brilho por raridade
 - **Avatares Twitch:** Customizáveis estilo Cult of the Lamb
-- **Partida:** Sem gráfico de jogo — campo esquemático com notas (SofaScore)
+- **Partida (demo):** Sem gráfico de jogo — campo esquemático com notas (SofaScore)
+- **Partida (release):** Estilo "futebol de botão" — campo 2D top-down com discos/sprites anime representando jogadores, movimentação simplificada
 - **Ferramenta:** Aseprite para sprites e assets

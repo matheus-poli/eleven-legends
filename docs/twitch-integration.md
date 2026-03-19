@@ -131,11 +131,11 @@ ws://irc-ws.chat.twitch.tv:443
 
 ### Eventos do Bot → Jogo
 
-```gdscript
-signal viewer_joined(username: String)
-signal ticket_purchased(username: String, tier: String)
-signal avatar_customized(username: String, config: Dictionary)
-signal youth_promoted(username: String, player_id: String)
+```csharp
+[Signal] public delegate void ViewerJoinedEventHandler(string username);
+[Signal] public delegate void TicketPurchasedEventHandler(string username, string tier);
+[Signal] public delegate void AvatarCustomizedEventHandler(string username, Dictionary config);
+[Signal] public delegate void YouthPromotedEventHandler(string username, string playerId);
 ```
 
 ---

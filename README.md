@@ -14,8 +14,8 @@ No universo de **Eleven Legends**, o futebol se tornou a força mais poderosa da
 |---|---|
 | **Gênero** | Football Manager + Gacha + Training Sim + Stream Integration |
 | **Estilo visual** | Anime — representação fictícia da realidade |
-| **Engine** | Godot 4 (GDScript) |
-| **Banco de dados** | SQLite (via plugin godot-sqlite) |
+| **Engine** | Godot 4 (C#) |
+| **Banco de dados** | SQLite (via Microsoft.Data.Sqlite / nativo .NET) |
 | **Arte** | Aseprite |
 | **Backend futuro** | Node.js (bot de stream persistente) |
 
@@ -27,7 +27,7 @@ No universo de **Eleven Legends**, o futebol se tornou a força mais poderosa da
 | **Uma Musume** | Sistema de treinamento com alocação + eventos aleatórios |
 | **Cult of the Lamb** | Customização de aparência dos avatares de chat (Twitch/Kick) |
 | **SofaScore** | Visualização de partida: ratings em tempo real, timeline de eventos |
-| **DaisyUI hover-3d** | Estilo visual das cartas de jogadores (efeito 3D no hover) |
+| **Futebol de botão** | Representação gráfica da simulação no release (2D top-down, discos com faces anime) |
 
 ---
 
@@ -75,7 +75,7 @@ A primeira versão jogável com loop completo.
 
 ### O que NÃO está na demo
 
-- Gráfico de simulação de partida
+- Simulação gráfica "futebol de botão" (apenas na versão release)
 - Transferências completas (negociação detalhada)
 - Mundo inteiro (~195 países)
 - Seleções jogáveis
@@ -89,6 +89,7 @@ A primeira versão jogável com loop completo.
 | Área | Plano |
 |---|---|
 | **Plataformas** | Steam, Nintendo Switch, PS5, Mobile |
+| **Simulação gráfica** | Estilo "futebol de botão" — 2D top-down com discos/sprites anime |
 | **Multiplayer** | Co-op local, leaderboards online, possível modo online |
 | **Stream** | Bot persistente Node.js, votações de chat, eventos ao vivo |
 | **Idiomas** | Pesquisa dos idiomas mais usados em gaming → meta de cobertura máxima |
