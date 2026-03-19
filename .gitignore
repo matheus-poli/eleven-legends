@@ -8,6 +8,15 @@ export/
 *.apk
 *.ipa
 
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.DotSettings.user
+TestResults/
+
 # OS
 .DS_Store
 Thumbs.db
