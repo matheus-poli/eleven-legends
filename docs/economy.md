@@ -21,7 +21,26 @@ O jogo separa as finanças do clube das finanças pessoais do técnico.
 |---|---|
 | Competições | Premiações por fase atingida (liga, copa, mundial) |
 | Vendas de jogadores | Transferências saindo |
-| Receita de base | Torcida, patrocínios, bilheteria (fixo por clube) |
+| Receita de base | Torcida, patrocínios (fixo por clube, varia com reputação) |
+| **Bilheteria** | **Receita por jogo — inclui recompensas de Twitch/Kick** |
+
+### Bilheteria e Twitch/Kick
+
+A bilheteria é a principal ponte entre o jogo e a integração com streams:
+
+```
+ticket_revenue = base_attendance * ticket_price + twitch_rewards_value
+```
+
+| Componente | Descrição |
+|---|---|
+| `base_attendance` | Público base do clube (depende de reputação e resultados) |
+| `ticket_price` | Preço do ingresso (ajustável pelo técnico) |
+| `twitch_rewards_value` | Valor gerado por viewers que resgatam recompensas no stream |
+
+Na demo: viewers de Twitch/Kick resgatam "ingressos virtuais" → geram `ticket_revenue` para o clube.
+
+---
 
 ## 📤 Custos do Clube
 
@@ -80,6 +99,9 @@ Scout/Carta identifica jogador
                 └─ Integração no elenco
 ```
 
+### Na Demo
+Transferências simplificadas: apenas jogadores livres e categoria de base (cartas de recrutamento). Negociação completa fica para versões posteriores.
+
 ---
 
 ## 🃏 Sistema de Cartas (Gacha)
@@ -120,6 +142,7 @@ Revelam um jovem talento gerado proceduralmente.
 - Atributos baseados em potencial (maioria oculto no início)
 - Raridade influencia o potencial máximo do jogador
 - O técnico decide se integra ao clube ou descarta
+- Na integração Twitch/Kick: jovens da base podem ser vinculados a viewers do chat
 
 ### 3. Cartas de Olheiro
 
@@ -128,6 +151,14 @@ Representam uma recomendação de scout.
 - Pode ser um **jogador existente** no mundo do jogo (com histórico real de stats)
 - Pode ser um **jovem desconhecido** (sem histórico, alto risco/recompensa)
 - O scout tem nível de confiabilidade que afeta a precisão da avaliação
+
+### Visual de Cartas
+
+Estilo **3D hover** (referência: DaisyUI hover-3d):
+- Efeito de perspectiva 3D ao interagir (mouse hover / toque)
+- Brilho e borda por raridade (bronze, prata, ouro, diamante)
+- Stats principais visíveis na frente, stats detalhados no verso
+- Implementado em Godot com shader de parallax, não web
 
 ---
 
@@ -138,6 +169,7 @@ Receitas
   + Premiações de competições
   + Vendas de jogadores
   + Receita base do clube
+  + Bilheteria (inclui recompensas Twitch/Kick)
   
 Despesas
   - Folha salarial (mensal)
@@ -152,16 +184,18 @@ Se club_balance < limite → demissão imediata do técnico
 
 ---
 
-## 🎯 MVP — Escopo Econômico
+## 🎯 Demo — Escopo Econômico
 
-**Implementar no MVP:**
+**Implementar na demo:**
 - `club_balance` e `manager_balance` separados
-- Receitas simples (premiação por resultado + receita base fixa)
+- Receitas simples (premiação por resultado + receita base fixa + bilheteria)
+- Bilheteria com integração Twitch/Kick (recompensas → ingressos → receita)
 - Salários básicos (folha mensal)
-- Falência → demissão
+- Falência → demissão → game over
 
 **Adiar para fases posteriores:**
 - Negociação de transferências completa
 - Bônus de desempenho do técnico
 - Sistema de cartas de olheiro
 - Crises econômicas narrativas
+- Preço de ingresso ajustável

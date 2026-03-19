@@ -1,55 +1,98 @@
 # ⚽ Eleven Legends
 
-> Football Manager + Gacha + Stream Integration
+> Em um mundo onde o futebol decidiu o destino das nações, apenas os melhores técnicos sobrevivem.
+
+## 🌍 A Lore
+
+No universo de **Eleven Legends**, o futebol se tornou a força mais poderosa da humanidade. Nações medem seu poder nos gramados. Títulos continentais valem mais que tratados. A Copa do Mundo é o evento supremo da civilização. Neste mundo, você é um técnico — e sua carreira determina o destino de clubes, torcidas e países inteiros.
+
+---
 
 ## 🧠 Visão Geral
 
 | | |
 |---|---|
-| **Gênero** | Football Manager + Gacha + Stream Integration |
-| **Plataforma** | PC (Steam + Itch.io) |
-| **Engine** | Godot 4 |
-| **Foco inicial** | Simulação de partidas (sem UI gráfica complexa) |
+| **Gênero** | Football Manager + Gacha + Training Sim + Stream Integration |
+| **Estilo visual** | Anime — representação fictícia da realidade |
+| **Engine** | Godot 4 (GDScript) |
 | **Banco de dados** | SQLite (via plugin godot-sqlite) |
+| **Arte** | Aseprite |
 | **Backend futuro** | Node.js (bot de stream persistente) |
+
+### Referências de Design
+
+| Referência | O que pegamos dela |
+|---|---|
+| **PIX Football Manager / Brasfoot** | Gestão tática e econômica acessível |
+| **Uma Musume** | Sistema de treinamento com alocação + eventos aleatórios |
+| **Cult of the Lamb** | Customização de aparência dos avatares de chat (Twitch/Kick) |
+| **SofaScore** | Visualização de partida: ratings em tempo real, timeline de eventos |
+| **DaisyUI hover-3d** | Estilo visual das cartas de jogadores (efeito 3D no hover) |
 
 ---
 
 ## 🎯 Pilares do Jogo
 
-1. **Simulação realista de futebol** — partidas simuladas tick a tick (90 ticks = 90 minutos)
-2. **Narrativa emergente** — eventos, notícias e crises gerados pelo estado do jogo
-3. **Interação com chat** — votações e eventos disparados pelo público (futuro)
-4. **Progressão de carreira do técnico** — reputação, demissão, desemprego, game over
-5. **Gestão econômica com risco real** — falência e demissão como consequências reais
+1. **Simulação realista** — partidas tick a tick com atributos, traits e química
+2. **Treinamento divertido** — alocação de treino com eventos aleatórios (lesões, breakthroughs, conflitos)
+3. **Narrativa emergente** — eventos, notícias e crises gerados pelo estado do jogo
+4. **Interação com stream** — youth players como avatares do chat, bilheteria por recompensas
+5. **Progressão de carreira** — reputação, demissão, desemprego, game over... ou glória
+6. **Risco econômico real** — falência é game over; gestão inteligente é sobrevivência
+7. **Mundo fictício baseado no real** — nomes algoritmicamente gerados, stats baseados em dados reais
 
 ---
 
 ## ⚙️ Core Loop
 
 ```
-Dia → Treino/Descanso/Gestão → Partida → Eventos → Resultado → Economia → Notícias → Próximo dia
+Dia → Treino (alocação + eventos) / Descanso / Gestão
+    → Partida (eventos + ratings SofaScore)
+    → Resultado → Economia (salários, bilheteria, prêmios)
+    → Notícias → Próximo dia
 ```
 
 ---
 
-## 🎮 MVP (Primeira Versão)
+## 🎮 Demo Pré-Alpha (Itch.io)
 
-O MVP foca em fazer o loop central funcionar antes de qualquer expansão.
+A primeira versão jogável com loop completo.
 
-**Incluído:**
-- Motor de simulação de partidas (90 ticks)
-- Atributos básicos de jogadores
-- Sistema de eventos e rating pós-jogo
-- 1 liga, 2–4 times
-- Loop econômico básico
+### Escopo
 
-**Não incluído ainda:**
-- Integração com Twitch/Kick
-- Transferências completas
+| Item | Valor |
+|---|---|
+| **Times** | 32 (4 países × 8 times cada) |
+| **Competições** | Liga eliminatória por país → Mundial entre campeões |
+| **Win condition** | Vencer liga → Classificar pro mundial → Vencer mundial → Convite para treinar a seleção |
+| **Game over** | Falência do clube e/ou demissão do técnico |
+| **Simulação** | Sem gráfico — eventos textuais + ratings em tempo real (estilo SofaScore) |
+| **Dados** | Scrape manual único de bases reais → JSON com nomes fictícios |
+| **Idiomas** | Português (BR) + Inglês |
+| **Twitch/Kick** | Bilheteria por recompensas + youth players como avatares do chat |
+| **Treinamento** | Alocação de jogadores em sessões + eventos aleatórios |
+| **Distribuição** | Itch.io |
+
+### O que NÃO está na demo
+
+- Gráfico de simulação de partida
+- Transferências completas (negociação detalhada)
 - Mundo inteiro (~195 países)
-- Seleções nacionais
+- Seleções jogáveis
+- Co-op / multiplayer
 - UI gráfica complexa
+
+---
+
+## 🔮 Visão de Futuro
+
+| Área | Plano |
+|---|---|
+| **Plataformas** | Steam, Nintendo Switch, PS5, Mobile |
+| **Multiplayer** | Co-op local, leaderboards online, possível modo online |
+| **Stream** | Bot persistente Node.js, votações de chat, eventos ao vivo |
+| **Idiomas** | Pesquisa dos idiomas mais usados em gaming → meta de cobertura máxima |
+| **Mundo** | Todos os ~195 países com ligas, continentais, mundiais, seleções |
 
 ---
 
@@ -58,17 +101,21 @@ O MVP foca em fazer o loop central funcionar antes de qualquer expansão.
 ```
 eleven-legends/
 ├── src/
-│   ├── simulation/   # Motor de simulação de partidas (ticks, ações, fórmulas)
-│   ├── gacha/        # Sistema de cartas (vestiário, recrutamento base, olheiros)
-│   ├── manager/      # Gestão de time, elenco, tática, carreira do técnico
-│   └── stream/       # Integração com Twitch/Kick (futuro)
+│   ├── simulation/   # Motor de simulação (ticks, ações, fórmulas, treino)
+│   ├── gacha/        # Sistema de cartas (vestiário, base, olheiros)
+│   ├── manager/      # Gestão (time, elenco, tática, carreira)
+│   ├── stream/       # Integração Twitch/Kick (avatares, bilheteria)
+│   └── data/         # Modelos de dados, schemas, i18n
+├── tools/            # Scripts externos (scraper de dados, gerador de nomes)
 ├── assets/           # Sprites, áudio, fontes (Aseprite)
 ├── scenes/           # Cenas Godot (.tscn)
-├── tests/            # Testes unitários e de integração
-└── docs/             # Documentos de design e especificações técnicas
-    ├── game-design.md   # GDD completo
-    ├── simulation.md    # Spec técnica da simulação
-    └── economy.md       # Economia, gacha, transferências
+├── tests/            # Testes unitários e integração
+└── docs/             # Documentos de design e specs
+    ├── game-design.md         # GDD completo
+    ├── simulation.md          # Spec do motor de simulação
+    ├── economy.md             # Economia, gacha, transferências
+    ├── data-pipeline.md       # Scraper + gerador de nomes fictícios
+    └── twitch-integration.md  # Twitch/Kick: avatares, bilheteria
 ```
 
 ---
@@ -77,31 +124,52 @@ eleven-legends/
 
 **Fase 1 — Motor de Simulação**
 - [ ] Estrutura de 90 ticks por partida
-- [ ] Atributos de jogadores (técnico, mental, físico, especial)
+- [ ] Atributos de jogadores (técnico, mental, físico, especial, goleiro)
 - [ ] Fórmula de sucesso com seeded RNG
-- [ ] Sistema de traits e química
+- [ ] Traits e química
 - [ ] Rating pós-jogo (0–10, MVP/SVP)
 
-**Fase 2 — Loop de Jogo**
-- [ ] 1 liga com pontos corridos
-- [ ] Calendário de temporada (treino, descanso, jogos)
-- [ ] Sistema de notícias e eventos
-- [ ] Economia básica (receitas, salários)
-- [ ] Carreira do técnico (reputação, demissão)
+**Fase 2 — Treinamento & Progressão**
+- [ ] Sistema de alocação de treino (sessões por tipo)
+- [ ] Eventos aleatórios de treino (lesões, breakthroughs, conflitos)
+- [ ] Evolução de atributos via treino
+- [ ] Familiaridade posicional
 
-**Fase 3 — Gacha & Progressão**
-- [ ] Cartas de vestiário (buffs/debuffs no intervalo)
-- [ ] Cartas de recrutamento (categoria de base + olheiros)
-- [ ] Sistema de transferências (janelas)
+**Fase 3 — Loop de Jogo**
+- [ ] Liga eliminatória (4 países × 8 times)
+- [ ] Mundial entre campeões
+- [ ] Calendário de temporada
+- [ ] Economia básica (salários, bilheteria, prêmios)
+- [ ] Carreira do técnico (reputação, demissão, win condition)
 
-**Fase 4 — Mundo Expandido**
-- [ ] Simulação global 3 níveis (Poisson)
+**Fase 4 — Gacha & Cartas**
+- [ ] Cartas de vestiário (intervalo: buffs/debuffs)
+- [ ] Cartas de categoria de base (recrutamento)
+- [ ] Visual de carta 3D (ref: DaisyUI hover-3d)
+
+**Fase 5 — Twitch/Kick Integration**
+- [ ] Youth players como avatares do chat
+- [ ] Customização de aparência (ref: Cult of the Lamb)
+- [ ] Bilheteria via recompensas resgatadas
+- [ ] Bot persistente Node.js
+
+**Fase 6 — Data Pipeline**
+- [ ] Scraper de bases de futebol (TransferMarkt, FBref, etc.)
+- [ ] Algoritmo de nomes fictícios (anagramas/sílabas)
+- [ ] Pipeline: scrape → normalização → JSON
+- [ ] Atualização periódica de dados
+
+**Fase 7 — Mundo Expandido**
+- [ ] Todos os ~195 países com ligas nacionais
 - [ ] Competições continentais e mundiais
-- [ ] Seleções nacionais
+- [ ] Seleções nacionais e Copa do Mundo
+- [ ] Simulação global 3 níveis (Poisson)
 
-**Fase 5 — Stream Integration**
-- [ ] Integração Twitch/Kick (votações, eventos de chat)
-- [ ] Bot persistente via Node.js
+**Fase 8 — Multiplataforma & Online**
+- [ ] Steam, Switch, PS5, Mobile
+- [ ] Co-op local
+- [ ] Leaderboards online
+- [ ] Internacionalização (meta: máximo de idiomas possível)
 
 ---
 
@@ -116,10 +184,12 @@ eleven-legends/
 
 ## 📚 Documentação
 
-- [`docs/game-design.md`](docs/game-design.md) — Design do jogo completo (GDD)
+- [`docs/game-design.md`](docs/game-design.md) — GDD completo
 - [`docs/simulation.md`](docs/simulation.md) — Spec técnica do motor de simulação
 - [`docs/economy.md`](docs/economy.md) — Economia, gacha e transferências
-- [`AGENTS.md`](AGENTS.md) — Guia para agentes de IA e colaboradores técnicos
+- [`docs/data-pipeline.md`](docs/data-pipeline.md) — Scraper de dados + nomes fictícios
+- [`docs/twitch-integration.md`](docs/twitch-integration.md) — Integração Twitch/Kick
+- [`AGENTS.md`](AGENTS.md) — Guia para agentes de IA
 
 ---
 

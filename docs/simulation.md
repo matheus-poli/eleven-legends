@@ -9,11 +9,18 @@ Uma partida é composta por **90 ticks**, onde cada tick representa 1 minuto de 
 ```
 match (90 ticks)
  ├─ 1º tempo: ticks 1–45
- ├─ intervalo: vestiário (sistema de cartas)
+ ├─ intervalo: vestiário (escolha de carta) + ajustes táticos
  └─ 2º tempo: ticks 46–90
 ```
 
 Cada tick executa o **loop de simulação** completo.
+
+### Visualização na Demo
+Sem gráfico de jogo. A partida é exibida estilo **SofaScore**:
+- Campo esquemático com nota de cada jogador (atualizada por tick)
+- Timeline lateral com eventos (gol, falta, cartão, substituição)
+- Placar em tempo real
+- O técnico pode fazer substituições e mudanças táticas durante a partida
 
 ---
 
@@ -77,6 +84,8 @@ Isso garante que a mesma partida com a mesma seed produz sempre o mesmo resultad
 ## 🧬 Atributos dos Jogadores
 
 Escala: **0 – 100**
+
+Dados base derivados de **scraping de dados reais** (TransferMarkt, FBref, etc.), mapeados para a escala do jogo. Nomes fictícios gerados algoritmicamente.
 
 ### Técnicos
 | Atributo | Descrição |
@@ -187,6 +196,47 @@ A familiaridade posicional **evolui com treino**, reduzindo progressivamente a p
 
 ---
 
+## 🏋️ Sistema de Treinamento
+
+Inspirado em **Uma Musume**: alocação de jogadores em sessões + eventos aleatórios.
+
+### Tipos de Sessão
+
+| Tipo | Atributos afetados |
+|---|---|
+| `technical` | finishing, passing, dribbling, first_touch, technique |
+| `tactical` | decisions, composure, positioning, anticipation, off_ball |
+| `physical` | speed, acceleration, stamina, strength, agility |
+| `mental` | consistency, leadership, morale, composure |
+
+### Fórmula de Evolução
+
+```
+growth = base_growth_rate * session_intensity * age_factor * talent_modifier + event_bonus
+```
+
+| Componente | Descrição |
+|---|---|
+| `base_growth_rate` | Constante por atributo |
+| `session_intensity` | Nível de intensidade escolhido pelo técnico |
+| `age_factor` | Jovens (< 23) evoluem mais rápido; veteranos (> 30) mais devagar |
+| `talent_modifier` | Potencial máximo do jogador afeta velocidade de ganho |
+| `event_bonus` | Bônus de breakthrough ou inspiração (se ocorrer) |
+
+### Eventos de Treino
+
+Gerados por RNG seeded (assim como a simulação).
+
+| Evento | Probabilidade base | Efeito |
+|---|---|---|
+| `breakthrough` | ~5% | Dobra o growth do atributo neste treino |
+| `injury` | ~3% (maior em physical intenso) | Jogador fora por 3–14 dias |
+| `conflict` | ~4% (maior se morale baixo) | -moral para jogadores envolvidos |
+| `inspiration` | ~3% | Aprende trait ou melhora familiaridade posicional |
+| `fatigue` | ~8% (maior sem descanso) | -stamina para próximo jogo |
+
+---
+
 ## 🌍 Simulação Global (3 Níveis)
 
 | Nível | Escopo | Método |
@@ -194,6 +244,9 @@ A familiaridade posicional **evolui com treino**, reduzindo progressivamente a p
 | 1 | Liga/time do jogador | Simulação tick a tick completa |
 | 2 | Ligas importantes | Simulação resumida por evento |
 | 3 | Resto do mundo | Resultado estatístico (Poisson) |
+
+### Na Demo Pré-Alpha
+Todos os 32 times são simulados em **Nível 1** (tick a tick). A simulação global com 3 níveis só é necessária quando o mundo expandir para ~195 países.
 
 ### Poisson para gols (Nível 3)
 
@@ -205,10 +258,10 @@ P(k gols) = (λ^k * e^-λ) / k!
 
 onde `λ` é a média de gols esperada, derivada dos ratings dos times.
 
-### Promoção entre níveis
+### Promoção entre níveis (futuro)
 
-- No MVP: fixo (hardcoded por reputação da liga)
-- No futuro: dinâmico (promove liga ao nível 2 quando o jogador tem interesse estratégico nela)
+- Fixo inicialmente (hardcoded por reputação da liga)
+- Dinâmico no futuro (promove liga ao nível 2 quando o jogador tem interesse estratégico nela)
 
 ---
 
@@ -226,6 +279,24 @@ class MatchState:
     var player_ratings: Dictionary  # player_id → float
     var player_stamina: Dictionary  # player_id → float (degrada por tick)
 ```
+
+---
+
+## 🏟️ Formato de Competição na Demo
+
+### Liga Nacional (por país)
+- **8 times** por país
+- **Eliminatória** (mata-mata direto)
+  - Quartas: 4 jogos (8 → 4 times)
+  - Semifinais: 2 jogos (4 → 2 times)
+  - Final: 1 jogo
+- Campeão classificado para o Mundial
+
+### Mundial
+- **4 campeões** nacionais
+- Semifinais: 2 jogos
+- Final: 1 jogo
+- Vencedor → tela de vitória (convite para seleção)
 
 ---
 
