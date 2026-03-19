@@ -29,7 +29,8 @@ O mundo do jogo é **fictício mas baseado na realidade**: todos os jogadores, t
 
 | Referência | Influência |
 |---|---|
-| **PIX Football Manager / Brasfoot** | Gestão tática e econômica acessível |
+| **PIX Football Manager / Brasfoot** | Gestão tática e econômica acessível (mas NÃO o estilo visual) |
+| **Duolingo** | UI/UX: interface moderna, clean, colorida, micro-animações, feedback visual constante |
 | **Uma Musume** | Treinamento: alocação de sessões + eventos aleatórios |
 | **Cult of the Lamb** | Customização de aparência dos avatares de chat |
 | **SofaScore** | Visualização de partida: ratings em tempo real, timeline de eventos |
@@ -304,12 +305,55 @@ Notícias são geradas automaticamente pelo estado do jogo.
 
 ---
 
-## 🎨 Estilo Visual
+## 🎨 Estilo Visual & UI/UX
+
+### Filosofia de UI
+
+> **Eleven Legends NÃO tem visual retrô.** A interface é moderna, clean e polida — padrão 2026.
+
+A referência principal de UI/UX é o **Duolingo**: interface colorida, amigável, com micro-animações e feedback visual constante. O jogador deve sentir que cada ação tem resposta — nada acontece "silenciosamente".
+
+### Princípios de UI
+
+| Princípio | Descrição |
+|---|---|
+| **Feedback imediato** | Toda ação do jogador gera resposta visual: botões animam ao clicar, valores pulsam ao mudar, transições suaves entre telas |
+| **Celebração** | Conquistas são celebradas com confetes, flashes, sons satisfatórios — gol, vitória, promoção, breakthrough no treino |
+| **Micro-animações** | Elementos da UI têm vida: cards deslizam ao entrar, barras de stat preenchem com easing, ícones fazem bounce |
+| **Cores vibrantes** | Paleta moderna e saturada, sem medo de cor. Tons diferentes por contexto (treino = verde, partida = azul, economia = dourado) |
+| **Tipografia limpa** | Fontes sem serifa, hierarquia clara, muito espaço em branco |
+| **Acessibilidade** | Contraste adequado, texto legível, ícones + texto (nunca só ícone) |
+
+### Exemplos de Feedback Visual
+
+| Evento | Feedback |
+|---|---|
+| Gol marcado | Flash na tela + confetes + rating do jogador pulsa verde + som de torcida |
+| Jogador lesionado | Tela treme levemente (screen shake) + ícone de lesão aparece com bounce + notificação vermelha |
+| Breakthrough no treino | Explosão de partículas douradas + stat sobe com animação + som de "level up" |
+| Vitória no jogo | Confetes full-screen + placar final com animação + MVP destacado com brilho |
+| Demissão | Tela escurece gradualmente + notificação dramática + transição para tela de desemprego |
+| Carta revelada | Carta vira com flip 3D + brilho por raridade + partículas se for rara |
+| Transferência aceita | Check animado + moedas animam saindo/entrando + balanço atualiza com pulse |
+
+### Estilo dos Elementos
 
 - **Arte:** Anime — representação fictícia e estilizada da realidade
-- **Jogadores:** Inicialmente sem aparência detalhada; representados por cartas com stats
-- **Cartas:** Efeito 3D hover (ref: DaisyUI hover-3d), brilho por raridade
+- **Jogadores:** Inicialmente representados por cartas com stats; faces anime no release
+- **Cartas:** Efeito 3D hover (ref: DaisyUI hover-3d), brilho e partículas por raridade
 - **Avatares Twitch:** Customizáveis estilo Cult of the Lamb
-- **Partida (demo):** Sem gráfico de jogo — campo esquemático com notas (SofaScore)
-- **Partida (release):** Estilo "futebol de botão" — campo 2D top-down com discos/sprites anime representando jogadores, movimentação simplificada
+- **Botões:** Arredondados, com sombra suave, animação de press/release
+- **Listas/Tabelas:** Clean, com zebra-striping sutil, hover highlight, scroll suave
+- **Modais/Popups:** Aparecem com scale-in + backdrop blur
+- **Partida (demo):** Campo esquemático com notas estilo SofaScore — mas com animações nos eventos
+- **Partida (release):** Estilo "futebol de botão" — campo 2D top-down com discos/sprites anime
 - **Ferramenta:** Aseprite para sprites e assets
+
+### Anti-padrões (o que NÃO fazer na UI)
+
+- ❌ Interfaces cinzas, sem cor, estilo planilha Excel
+- ❌ Texto denso sem hierarquia visual
+- ❌ Transições instantâneas (tudo precisa de easing)
+- ❌ Ações sem feedback (clicou e nada aconteceu visualmente)
+- ❌ Visual retrô/pixel-art na UI (a arte do jogo pode ser estilizada, mas a UI é moderna)
+- ❌ Tabelas gigantes sem paginação ou scroll virtual

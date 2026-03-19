@@ -198,6 +198,32 @@ O jogo usa **nomes fictícios gerados algoritmicamente** a partir de dados reais
 
 ---
 
+## 🎨 UI/UX — Regras para Agentes
+
+A UI de Eleven Legends é **moderna, clean e polida** — referência principal: **Duolingo**. NÃO é visual retrô.
+
+### Regras obrigatórias ao criar UI
+
+1. **Toda ação do jogador deve ter feedback visual** — botões animam, valores pulsam, transições suaves
+2. **Use animações com easing** — nunca transições instantâneas (Tween, AnimationPlayer)
+3. **Celebre conquistas** — gol, vitória, breakthrough: confetes, partículas, flash, som
+4. **Cores vibrantes** por contexto: treino = verde, partida = azul, economia = dourado
+5. **Tipografia limpa** — sem serifa, hierarquia clara, espaçamento generoso
+6. **Botões arredondados** com sombra suave e animação de press/release
+7. **Modais com backdrop blur** e animação de scale-in
+8. **Listas/tabelas clean** — zebra-striping sutil, hover highlight, scroll suave
+
+### Proibido na UI
+
+- ❌ Interface cinza/sem cor estilo planilha
+- ❌ Texto denso sem hierarquia
+- ❌ Transições instantâneas (tudo precisa de easing)
+- ❌ Ações sem resposta visual
+- ❌ Visual retrô/pixel-art na interface (UI é moderna, arte do jogo pode ser estilizada)
+- ❌ Tabelas gigantes sem paginação
+
+---
+
 ## 💰 Economia
 
 Duas moedas separadas:
@@ -210,6 +236,7 @@ Nunca misture as duas. O técnico não pode usar `club_balance` para fins pessoa
 
 ## 🔴 O que NÃO fazer
 
+- **Não crie UI sem animações/feedback** — toda ação precisa de resposta visual
 - **Não acople lógica de simulação a nós de cena** (`Node`, `Node2D`, etc.)
 - **Não use `GD.Randf()` global** — sempre use RNG injetado com seed
 - **Não crie tabelas SQLite sem documentar o schema em `docs/`**
@@ -222,6 +249,7 @@ Nunca misture as duas. O técnico não pode usar `club_balance` para fins pessoa
 
 ## ✅ Checklist antes de submeter código
 
+- [ ] UI tem feedback visual para ações? (animações, easing, partículas)
 - [ ] Tipos estáticos em todas as funções públicas?
 - [ ] Lógica de jogo em `src/`, não em cena?
 - [ ] RNG injetado (não global)?

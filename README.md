@@ -23,7 +23,8 @@ No universo de **Eleven Legends**, o futebol se tornou a força mais poderosa da
 
 | Referência | O que pegamos dela |
 |---|---|
-| **PIX Football Manager / Brasfoot** | Gestão tática e econômica acessível |
+| **PIX Football Manager / Brasfoot** | Gestão tática e econômica acessível (mas NÃO o estilo visual) |
+| **Duolingo** | UI moderna, clean, colorida, com animações e feedback visual para tudo |
 | **Uma Musume** | Sistema de treinamento com alocação + eventos aleatórios |
 | **Cult of the Lamb** | Customização de aparência dos avatares de chat (Twitch/Kick) |
 | **SofaScore** | Visualização de partida: ratings em tempo real, timeline de eventos |
