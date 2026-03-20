@@ -4,7 +4,6 @@ using ElevenLegends.Data.Models;
 using ElevenLegends.Persistence;
 using ElevenLegends.Simulation;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -47,18 +46,18 @@ public partial class PostMatchScreen : Control
 
     private void BuildUI(DayResult dayResult)
     {
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
@@ -68,24 +67,24 @@ public partial class PostMatchScreen : Control
 
         // Result header
         string resultText = won ? "🎉 VICTORY!" : (playerGoals == opponentGoals ? "🤝 DRAW" : "😞 DEFEAT");
-        Color resultColor = won ? Theme.Green : (playerGoals == opponentGoals ? Theme.Yellow : Theme.Pink);
+        Color resultColor = won ? UITheme.Green : (playerGoals == opponentGoals ? UITheme.Yellow : UITheme.Pink);
 
-        var header = Theme.CreateLabel(resultText, Theme.FontSizeTitle,
+        var header = UITheme.CreateLabel(resultText, UITheme.FontSizeTitle,
             resultColor, HorizontalAlignment.Center);
         root.AddChild(header);
 
         // Score
-        var scoreLabel = Theme.CreateLabel(
+        var scoreLabel = UITheme.CreateLabel(
             $"{_result.FinalState.ScoreHome} - {_result.FinalState.ScoreAway}",
-            48, Theme.TextPrimary, HorizontalAlignment.Center);
+            48, UITheme.TextPrimary, HorizontalAlignment.Center);
         root.AddChild(scoreLabel);
 
         var homeClub = _gameState.Clubs.First(c => c.Id == _ctx.PlayerFixture.HomeClubId);
         var awayClub = _gameState.Clubs.First(c => c.Id == _ctx.PlayerFixture.AwayClubId);
 
-        var teams = Theme.CreateLabel(
+        var teams = UITheme.CreateLabel(
             $"{homeClub.Name} vs {awayClub.Name}",
-            Theme.FontSizeBody, Theme.TextSecondary, HorizontalAlignment.Center);
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
         root.AddChild(teams);
 
         // MVP card
@@ -98,22 +97,22 @@ public partial class PostMatchScreen : Control
         var mvpPlayer = allPlayers.FirstOrDefault(p => p.Id == _result.MvpPlayerId);
         if (mvpPlayer != null)
         {
-            var mvpCard = Theme.CreateCard();
+            var mvpCard = UITheme.CreateCard();
             root.AddChild(mvpCard);
 
             var mvpVbox = new VBoxContainer();
             mvpVbox.AddThemeConstantOverride("separation", 4);
             mvpCard.AddChild(mvpVbox);
 
-            mvpVbox.AddChild(Theme.CreateLabel("⭐ Man of the Match",
-                Theme.FontSizeBody, Theme.Yellow, HorizontalAlignment.Center));
-            mvpVbox.AddChild(Theme.CreateLabel(mvpPlayer.Name,
-                Theme.FontSizeHeading, Theme.TextPrimary, HorizontalAlignment.Center));
+            mvpVbox.AddChild(UITheme.CreateLabel("⭐ Man of the Match",
+                UITheme.FontSizeBody, UITheme.Yellow, HorizontalAlignment.Center));
+            mvpVbox.AddChild(UITheme.CreateLabel(mvpPlayer.Name,
+                UITheme.FontSizeHeading, UITheme.TextPrimary, HorizontalAlignment.Center));
 
             if (_result.FinalState.PlayerRatings.TryGetValue(mvpPlayer.Id, out float rating))
             {
-                mvpVbox.AddChild(Theme.CreateLabel($"Rating: {rating:F1}",
-                    Theme.FontSizeBody, Theme.Green, HorizontalAlignment.Center));
+                mvpVbox.AddChild(UITheme.CreateLabel($"Rating: {rating:F1}",
+                    UITheme.FontSizeBody, UITheme.Green, HorizontalAlignment.Center));
             }
         }
 
@@ -121,20 +120,20 @@ public partial class PostMatchScreen : Control
         var goals = _result.Events.Where(e => e.Type == EventType.Goal).ToList();
         if (goals.Count > 0)
         {
-            root.AddChild(Theme.CreateLabel("⚽ Goals", Theme.FontSizeHeading, Theme.Blue));
+            root.AddChild(UITheme.CreateLabel("⚽ Goals", UITheme.FontSizeHeading, UITheme.Blue));
             foreach (var goal in goals)
             {
-                root.AddChild(Theme.CreateLabel(
+                root.AddChild(UITheme.CreateLabel(
                     $"  {goal.Tick}' — {goal.Description}",
-                    Theme.FontSizeSmall, Theme.TextSecondary));
+                    UITheme.FontSizeSmall, UITheme.TextSecondary));
             }
         }
 
         // Other match results
         if (dayResult.Fixtures.Count > 1)
         {
-            root.AddChild(Theme.CreateLabel("📋 Other Results",
-                Theme.FontSizeHeading, Theme.TextSecondary));
+            root.AddChild(UITheme.CreateLabel("📋 Other Results",
+                UITheme.FontSizeHeading, UITheme.TextSecondary));
             foreach (var fix in dayResult.Fixtures)
             {
                 if (fix == _ctx.PlayerFixture) continue;
@@ -142,14 +141,14 @@ public partial class PostMatchScreen : Control
 
                 var home = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.HomeClubId);
                 var away = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.AwayClubId);
-                root.AddChild(Theme.CreateLabel(
+                root.AddChild(UITheme.CreateLabel(
                     $"  {home?.Name ?? "?"} {fix.Result.Value.Home} - {fix.Result.Value.Away} {away?.Name ?? "?"}",
-                    Theme.FontSizeSmall, Theme.TextSecondary));
+                    UITheme.FontSizeSmall, UITheme.TextSecondary));
             }
         }
 
         // Continue button
-        var continueBtn = Theme.CreateButton("➡️  Continue", Theme.Blue);
+        var continueBtn = UITheme.CreateButton("➡️  Continue", UITheme.Blue);
         continueBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         continueBtn.Pressed += () =>
         {

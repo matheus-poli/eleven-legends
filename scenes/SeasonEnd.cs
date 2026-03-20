@@ -3,7 +3,6 @@ using ElevenLegends.Data.Models;
 using ElevenLegends.Manager;
 using ElevenLegends.Persistence;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -24,18 +23,18 @@ public partial class SeasonEndScreen : Control
 
     private void BuildUI()
     {
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.PaddingLarge,
-            OffsetBottom = -Theme.PaddingLarge,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.PaddingLarge,
+            OffsetBottom = -UITheme.PaddingLarge,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         bool isGameOver = CareerManager.IsGameOver(_gameState.Manager);
@@ -43,77 +42,77 @@ public partial class SeasonEndScreen : Control
 
         if (isChampion)
         {
-            root.AddChild(Theme.CreateLabel("🏆 CHAMPION!",
-                Theme.FontSizeTitle, Theme.Yellow, HorizontalAlignment.Center));
-            root.AddChild(Theme.CreateLabel($"{_playerClub.Name} wins the Mundial!",
-                Theme.FontSizeHeading, Theme.Green, HorizontalAlignment.Center));
+            root.AddChild(UITheme.CreateLabel("🏆 CHAMPION!",
+                UITheme.FontSizeTitle, UITheme.Yellow, HorizontalAlignment.Center));
+            root.AddChild(UITheme.CreateLabel($"{_playerClub.Name} wins the Mundial!",
+                UITheme.FontSizeHeading, UITheme.Green, HorizontalAlignment.Center));
         }
         else if (isGameOver)
         {
-            root.AddChild(Theme.CreateLabel("💼 Game Over",
-                Theme.FontSizeTitle, Theme.Pink, HorizontalAlignment.Center));
-            root.AddChild(Theme.CreateLabel("You have been sacked.",
-                Theme.FontSizeHeading, Theme.TextSecondary, HorizontalAlignment.Center));
+            root.AddChild(UITheme.CreateLabel("💼 Game Over",
+                UITheme.FontSizeTitle, UITheme.Pink, HorizontalAlignment.Center));
+            root.AddChild(UITheme.CreateLabel("You have been sacked.",
+                UITheme.FontSizeHeading, UITheme.TextSecondary, HorizontalAlignment.Center));
         }
         else
         {
-            root.AddChild(Theme.CreateLabel("📊 Season Complete",
-                Theme.FontSizeTitle, Theme.Blue, HorizontalAlignment.Center));
+            root.AddChild(UITheme.CreateLabel("📊 Season Complete",
+                UITheme.FontSizeTitle, UITheme.Blue, HorizontalAlignment.Center));
         }
 
         // Season stats card
-        var statsCard = Theme.CreateCard();
+        var statsCard = UITheme.CreateCard();
         root.AddChild(statsCard);
 
         var statsVbox = new VBoxContainer();
         statsVbox.AddThemeConstantOverride("separation", 8);
         statsCard.AddChild(statsVbox);
 
-        statsVbox.AddChild(Theme.CreateLabel("📋 Season Summary",
-            Theme.FontSizeHeading, Theme.Blue, HorizontalAlignment.Center));
+        statsVbox.AddChild(UITheme.CreateLabel("📋 Season Summary",
+            UITheme.FontSizeHeading, UITheme.Blue, HorizontalAlignment.Center));
 
-        statsVbox.AddChild(Theme.CreateLabel(
+        statsVbox.AddChild(UITheme.CreateLabel(
             $"Club: {_playerClub.Name}",
-            Theme.FontSizeBody, Theme.TextPrimary));
-        statsVbox.AddChild(Theme.CreateLabel(
+            UITheme.FontSizeBody, UITheme.TextPrimary));
+        statsVbox.AddChild(UITheme.CreateLabel(
             $"Manager Reputation: {_gameState.Manager.Reputation}",
-            Theme.FontSizeBody, Theme.TextSecondary));
-        statsVbox.AddChild(Theme.CreateLabel(
+            UITheme.FontSizeBody, UITheme.TextSecondary));
+        statsVbox.AddChild(UITheme.CreateLabel(
             $"Club Balance: {_playerClub.Balance:C0}",
-            Theme.FontSizeBody, Theme.TextSecondary));
-        statsVbox.AddChild(Theme.CreateLabel(
+            UITheme.FontSizeBody, UITheme.TextSecondary));
+        statsVbox.AddChild(UITheme.CreateLabel(
             $"Squad Size: {_playerClub.Team.Players.Count}",
-            Theme.FontSizeBody, Theme.TextSecondary));
-        statsVbox.AddChild(Theme.CreateLabel(
+            UITheme.FontSizeBody, UITheme.TextSecondary));
+        statsVbox.AddChild(UITheme.CreateLabel(
             $"Manager Status: {_gameState.Manager.Status}",
-            Theme.FontSizeBody, Theme.TextSecondary));
+            UITheme.FontSizeBody, UITheme.TextSecondary));
 
         // Transfer history
         if (_gameState.TransferHistory.Count > 0)
         {
-            var transferCard = Theme.CreateCard();
+            var transferCard = UITheme.CreateCard();
             root.AddChild(transferCard);
 
             var transferVbox = new VBoxContainer();
             transferVbox.AddThemeConstantOverride("separation", 4);
             transferCard.AddChild(transferVbox);
 
-            transferVbox.AddChild(Theme.CreateLabel("🔄 Transfer Activity",
-                Theme.FontSizeBody, Theme.Orange));
+            transferVbox.AddChild(UITheme.CreateLabel("🔄 Transfer Activity",
+                UITheme.FontSizeBody, UITheme.Orange));
             foreach (var t in _gameState.TransferHistory.TakeLast(8))
             {
-                transferVbox.AddChild(Theme.CreateLabel(
+                transferVbox.AddChild(UITheme.CreateLabel(
                     $"  {t.Type}: {t.PlayerName} — {t.Fee:C0}",
-                    Theme.FontSizeSmall, Theme.TextSecondary));
+                    UITheme.FontSizeSmall, UITheme.TextSecondary));
             }
         }
 
         // Actions
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", Theme.Padding);
+        actions.AddThemeConstantOverride("separation", UITheme.Padding);
         root.AddChild(actions);
 
-        var menuBtn = Theme.CreateButton("🏠 Main Menu", Theme.Blue);
+        var menuBtn = UITheme.CreateButton("🏠 Main Menu", UITheme.Blue);
         menuBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         menuBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/MainMenu.tscn");

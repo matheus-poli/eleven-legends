@@ -6,7 +6,7 @@ namespace ElevenLegends.UI;
 /// Color palette and styling constants for the Eleven Legends UI.
 /// Duolingo-inspired: vibrant colors, gradients, rounded corners.
 /// </summary>
-public static class Theme
+public static class UITheme
 {
     // Primary palette
     public static readonly Color Green = new("4CAF50");

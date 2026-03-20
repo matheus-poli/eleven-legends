@@ -3,7 +3,6 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Simulation;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -51,18 +50,18 @@ public partial class MatchSimScreen : Control
 
     private void BuildUI()
     {
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
@@ -70,25 +69,25 @@ public partial class MatchSimScreen : Control
         var opponent = _gameState.Clubs.First(c => c.Id == opponentId);
 
         // Score display
-        var scoreCard = Theme.CreateCard();
+        var scoreCard = UITheme.CreateCard();
         root.AddChild(scoreCard);
 
         var scoreVbox = new VBoxContainer();
         scoreVbox.AddThemeConstantOverride("separation", 4);
         scoreCard.AddChild(scoreVbox);
 
-        _scoreLabel = Theme.CreateLabel(
+        _scoreLabel = UITheme.CreateLabel(
             $"{_config.HomeTeam.Name}  {_matchState.ScoreHome} - {_matchState.ScoreAway}  {_config.AwayTeam.Name}",
-            Theme.FontSizeTitle, Theme.TextPrimary, HorizontalAlignment.Center);
+            UITheme.FontSizeTitle, UITheme.TextPrimary, HorizontalAlignment.Center);
         scoreVbox.AddChild(_scoreLabel);
 
-        _tickLabel = Theme.CreateLabel("", Theme.FontSizeBody,
-            Theme.TextSecondary, HorizontalAlignment.Center);
+        _tickLabel = UITheme.CreateLabel("", UITheme.FontSizeBody,
+            UITheme.TextSecondary, HorizontalAlignment.Center);
         scoreVbox.AddChild(_tickLabel);
 
         // Possession bar
-        var possLabel = Theme.CreateLabel("Possession", Theme.FontSizeSmall,
-            Theme.TextSecondary, HorizontalAlignment.Center);
+        var possLabel = UITheme.CreateLabel("Possession", UITheme.FontSizeSmall,
+            UITheme.TextSecondary, HorizontalAlignment.Center);
         scoreVbox.AddChild(possLabel);
 
         _possessionBar = new ProgressBar
@@ -126,7 +125,7 @@ public partial class MatchSimScreen : Control
 
         // Add halftime button
         var root = GetChild<VBoxContainer>(1); // The VBoxContainer after bg
-        var halftimeBtn = Theme.CreateButton("🎴 Halftime — Choose Card", Theme.Yellow, Theme.TextPrimary);
+        var halftimeBtn = UITheme.CreateButton("🎴 Halftime — Choose Card", UITheme.Yellow, UITheme.TextPrimary);
         halftimeBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         halftimeBtn.Pressed += OnHalftime;
         root.AddChild(halftimeBtn);
@@ -159,15 +158,15 @@ public partial class MatchSimScreen : Control
 
         Color color = evt.Type switch
         {
-            EventType.Goal => Theme.Green,
-            EventType.YellowCard => Theme.Yellow,
-            EventType.RedCard => Theme.Pink,
-            _ => Theme.TextSecondary
+            EventType.Goal => UITheme.Green,
+            EventType.YellowCard => UITheme.Yellow,
+            EventType.RedCard => UITheme.Pink,
+            _ => UITheme.TextSecondary
         };
 
-        var label = Theme.CreateLabel(
+        var label = UITheme.CreateLabel(
             $"  {evt.Tick}' {emoji} {evt.Description}",
-            evt.Type == EventType.Goal ? Theme.FontSizeBody : Theme.FontSizeSmall,
+            evt.Type == EventType.Goal ? UITheme.FontSizeBody : UITheme.FontSizeSmall,
             color);
         _eventFeed.AddChild(label);
     }

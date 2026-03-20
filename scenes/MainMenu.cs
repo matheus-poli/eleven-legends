@@ -3,7 +3,6 @@ using ElevenLegends.Data.Generators;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Persistence;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -25,7 +24,7 @@ public partial class MainMenu : Control
     private void BuildUI()
     {
         // Background
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         // Center container
@@ -39,26 +38,26 @@ public partial class MainMenu : Control
         AddChild(center);
 
         // Title
-        var title = Theme.CreateLabel("⚽ Eleven Legends", Theme.FontSizeTitle,
-            Theme.Green, HorizontalAlignment.Center);
+        var title = UITheme.CreateLabel("⚽ Eleven Legends", UITheme.FontSizeTitle,
+            UITheme.Green, HorizontalAlignment.Center);
         center.AddChild(title);
 
-        var subtitle = Theme.CreateLabel("Football Manager + Gacha",
-            Theme.FontSizeBody, Theme.TextSecondary, HorizontalAlignment.Center);
+        var subtitle = UITheme.CreateLabel("Football Manager + Gacha",
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
         center.AddChild(subtitle);
 
         // Spacer
         center.AddChild(new Control { CustomMinimumSize = new Vector2(0, 40) });
 
         // New Game button
-        var newGameBtn = Theme.CreateButton("🆕  New Game", Theme.Green);
+        var newGameBtn = UITheme.CreateButton("🆕  New Game", UITheme.Green);
         newGameBtn.Pressed += OnNewGame;
         center.AddChild(newGameBtn);
 
         // Continue button (only if save exists)
         if (_saveManager.HasAutoSave())
         {
-            var continueBtn = Theme.CreateButton("▶️  Continue", Theme.Blue);
+            var continueBtn = UITheme.CreateButton("▶️  Continue", UITheme.Blue);
             continueBtn.Pressed += OnContinue;
             center.AddChild(continueBtn);
         }

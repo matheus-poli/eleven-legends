@@ -3,7 +3,6 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Simulation;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -29,29 +28,29 @@ public partial class PreMatch : Control
 
     private void BuildUI()
     {
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         if (_ctx.PlayerFixture == null)
         {
             // Player eliminated — skip match
-            var eliminated = Theme.CreateLabel(
+            var eliminated = UITheme.CreateLabel(
                 "Your club was eliminated. No match today.",
-                Theme.FontSizeHeading, Theme.TextSecondary, HorizontalAlignment.Center);
+                UITheme.FontSizeHeading, UITheme.TextSecondary, HorizontalAlignment.Center);
             root.AddChild(eliminated);
 
-            var skipBtn = Theme.CreateButton("Continue", Theme.Blue);
+            var skipBtn = UITheme.CreateButton("Continue", UITheme.Blue);
             skipBtn.Pressed += () =>
             {
                 _gameState.FinishDay(_ctx, null);
@@ -66,28 +65,28 @@ public partial class PreMatch : Control
         var opponent = _gameState.Clubs.First(c => c.Id == opponentId);
 
         // Match header
-        var header = Theme.CreateLabel(
+        var header = UITheme.CreateLabel(
             $"⚽ {_playerClub.Name}  vs  {opponent.Name}",
-            Theme.FontSizeTitle, Theme.TextPrimary, HorizontalAlignment.Center);
+            UITheme.FontSizeTitle, UITheme.TextPrimary, HorizontalAlignment.Center);
         root.AddChild(header);
 
-        var venue = Theme.CreateLabel(
+        var venue = UITheme.CreateLabel(
             isHome ? "🏟️ Home" : "✈️ Away",
-            Theme.FontSizeBody, Theme.TextSecondary, HorizontalAlignment.Center);
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
         root.AddChild(venue);
 
         // Tactics section
-        var tacticsCard = Theme.CreateCard();
+        var tacticsCard = UITheme.CreateCard();
         root.AddChild(tacticsCard);
 
         var tacticsVbox = new VBoxContainer();
         tacticsVbox.AddThemeConstantOverride("separation", 12);
         tacticsCard.AddChild(tacticsVbox);
 
-        tacticsVbox.AddChild(Theme.CreateLabel("🧠 Tactics", Theme.FontSizeHeading, Theme.Blue));
+        tacticsVbox.AddChild(UITheme.CreateLabel("🧠 Tactics", UITheme.FontSizeHeading, UITheme.Blue));
 
         // Formation buttons
-        var formLabel = Theme.CreateLabel("Formation:", Theme.FontSizeBody, Theme.TextSecondary);
+        var formLabel = UITheme.CreateLabel("Formation:", UITheme.FontSizeBody, UITheme.TextSecondary);
         tacticsVbox.AddChild(formLabel);
 
         var formHbox = new HBoxContainer();
@@ -98,8 +97,8 @@ public partial class PreMatch : Control
         foreach (var f in formations)
         {
             bool isSelected = f.Name == _selectedFormation.Name;
-            var btn = Theme.CreateButton(f.Name, isSelected ? Theme.Green : Theme.Border,
-                isSelected ? Theme.TextLight : Theme.TextPrimary);
+            var btn = UITheme.CreateButton(f.Name, isSelected ? UITheme.Green : UITheme.Border,
+                isSelected ? UITheme.TextLight : UITheme.TextPrimary);
             btn.CustomMinimumSize = new Vector2(100, 44);
             var capturedF = f;
             btn.Pressed += () =>
@@ -111,7 +110,7 @@ public partial class PreMatch : Control
         }
 
         // Style buttons
-        var styleLabel = Theme.CreateLabel("Style:", Theme.FontSizeBody, Theme.TextSecondary);
+        var styleLabel = UITheme.CreateLabel("Style:", UITheme.FontSizeBody, UITheme.TextSecondary);
         tacticsVbox.AddChild(styleLabel);
 
         var styleHbox = new HBoxContainer();
@@ -127,8 +126,8 @@ public partial class PreMatch : Control
                 TacticalStyle.Defensive => "🛡️",
                 _ => "⚖️"
             };
-            var btn = Theme.CreateButton($"{emoji} {style}", isSelected ? Theme.Blue : Theme.Border,
-                isSelected ? Theme.TextLight : Theme.TextPrimary);
+            var btn = UITheme.CreateButton($"{emoji} {style}", isSelected ? UITheme.Blue : UITheme.Border,
+                isSelected ? UITheme.TextLight : UITheme.TextPrimary);
             btn.CustomMinimumSize = new Vector2(140, 44);
             var capturedStyle = style;
             btn.Pressed += () =>
@@ -140,7 +139,7 @@ public partial class PreMatch : Control
         }
 
         // Start match button
-        var startBtn = Theme.CreateButton("🏟️  Start Match!", Theme.Green);
+        var startBtn = UITheme.CreateButton("🏟️  Start Match!", UITheme.Green);
         startBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         startBtn.CustomMinimumSize = new Vector2(300, 64);
         startBtn.Pressed += OnStartMatch;

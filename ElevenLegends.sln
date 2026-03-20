@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1765CB78
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElevenLegends.Tests", "tests\ElevenLegends.Tests\ElevenLegends.Tests.csproj", "{3AF87110-C513-4BAA-B64D-B81760F6A043}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElevenLegends", "ElevenLegends.csproj", "{B175AB56-D6BA-4076-B6FB-D7D6E1F1ACB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{3AF87110-C513-4BAA-B64D-B81760F6A043}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3AF87110-C513-4BAA-B64D-B81760F6A043}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3AF87110-C513-4BAA-B64D-B81760F6A043}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B175AB56-D6BA-4076-B6FB-D7D6E1F1ACB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B175AB56-D6BA-4076-B6FB-D7D6E1F1ACB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B175AB56-D6BA-4076-B6FB-D7D6E1F1ACB3}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{B175AB56-D6BA-4076-B6FB-D7D6E1F1ACB3}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3AF87110-C513-4BAA-B64D-B81760F6A043} = {1765CB78-FA1C-4D65-8E54-BF883AE094E4}

@@ -2,7 +2,6 @@ using Godot;
 using ElevenLegends.Data.Generators;
 using ElevenLegends.Data.Models;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -22,27 +21,27 @@ public partial class ClubSelection : Control
 
     private void BuildUI()
     {
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.PaddingLarge,
-            OffsetBottom = -Theme.PaddingLarge,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.PaddingLarge,
+            OffsetBottom = -UITheme.PaddingLarge,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         // Header
-        var header = Theme.CreateLabel("Choose Your Club", Theme.FontSizeTitle,
-            Theme.TextPrimary, HorizontalAlignment.Center);
+        var header = UITheme.CreateLabel("Choose Your Club", UITheme.FontSizeTitle,
+            UITheme.TextPrimary, HorizontalAlignment.Center);
         root.AddChild(header);
 
-        var subtitle = Theme.CreateLabel("Select a club to manage this season",
-            Theme.FontSizeBody, Theme.TextSecondary, HorizontalAlignment.Center);
+        var subtitle = UITheme.CreateLabel("Select a club to manage this season",
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
         root.AddChild(subtitle);
 
         // Scroll container for club cards
@@ -58,8 +57,8 @@ public partial class ClubSelection : Control
             Columns = 4,
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        grid.AddThemeConstantOverride("h_separation", Theme.Padding);
-        grid.AddThemeConstantOverride("v_separation", Theme.Padding);
+        grid.AddThemeConstantOverride("h_separation", UITheme.Padding);
+        grid.AddThemeConstantOverride("v_separation", UITheme.Padding);
         scroll.AddChild(grid);
 
         // Group by country
@@ -67,8 +66,8 @@ public partial class ClubSelection : Control
         foreach (var group in grouped)
         {
             // Country header spanning full width
-            var countryLabel = Theme.CreateLabel($"🌍 {group.Key}",
-                Theme.FontSizeHeading, Theme.Blue);
+            var countryLabel = UITheme.CreateLabel($"🌍 {group.Key}",
+                UITheme.FontSizeHeading, UITheme.Blue);
             grid.AddChild(countryLabel);
 
             // Spacers for remaining columns
@@ -83,7 +82,7 @@ public partial class ClubSelection : Control
         }
 
         // Back button
-        var backBtn = Theme.CreateButton("← Back", Theme.TextSecondary);
+        var backBtn = UITheme.CreateButton("← Back", UITheme.TextSecondary);
         backBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/MainMenu.tscn");
         root.AddChild(backBtn);
@@ -91,7 +90,7 @@ public partial class ClubSelection : Control
 
     private PanelContainer CreateClubCard(Club club)
     {
-        var card = Theme.CreateCard();
+        var card = UITheme.CreateCard();
         card.CustomMinimumSize = new Vector2(250, 120);
 
         var vbox = new VBoxContainer();
@@ -99,7 +98,7 @@ public partial class ClubSelection : Control
         card.AddChild(vbox);
 
         // Club name
-        var name = Theme.CreateLabel(club.Name, Theme.FontSizeBody, Theme.TextPrimary);
+        var name = UITheme.CreateLabel(club.Name, UITheme.FontSizeBody, UITheme.TextPrimary);
         vbox.AddChild(name);
 
         // Stats
@@ -108,14 +107,14 @@ public partial class ClubSelection : Control
                 ? p.Attributes.GoalkeeperOverall
                 : p.Attributes.OutfieldOverall);
 
-        var stats = Theme.CreateLabel(
+        var stats = UITheme.CreateLabel(
             $"💰 {club.Balance:C0}  ⭐ {club.Reputation}  📊 {avgOverall:F0}",
-            Theme.FontSizeSmall, Theme.TextSecondary);
+            UITheme.FontSizeSmall, UITheme.TextSecondary);
         vbox.AddChild(stats);
 
-        var playerCount = Theme.CreateLabel(
+        var playerCount = UITheme.CreateLabel(
             $"👥 {club.Team.Players.Count} players",
-            Theme.FontSizeCaption, Theme.TextSecondary);
+            UITheme.FontSizeCaption, UITheme.TextSecondary);
         vbox.AddChild(playerCount);
 
         // Click handler
@@ -126,15 +125,15 @@ public partial class ClubSelection : Control
         };
         var btnStyle = new StyleBoxFlat
         {
-            BgColor = Theme.Green,
+            BgColor = UITheme.Green,
             CornerRadiusBottomLeft = 8,
             CornerRadiusBottomRight = 8,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
         };
         button.AddThemeStyleboxOverride("normal", btnStyle);
-        button.AddThemeColorOverride("font_color", Theme.TextLight);
-        button.AddThemeFontSizeOverride("font_size", Theme.FontSizeSmall);
+        button.AddThemeColorOverride("font_color", UITheme.TextLight);
+        button.AddThemeFontSizeOverride("font_size", UITheme.FontSizeSmall);
         button.Pressed += () => SelectClub(club);
         vbox.AddChild(button);
 

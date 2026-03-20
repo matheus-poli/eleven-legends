@@ -1,10 +1,10 @@
 using Godot;
 using ElevenLegends.Data.Enums;
+using PlayerPosition = ElevenLegends.Data.Enums.Position;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Persistence;
 using ElevenLegends.Transfers;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -29,26 +29,26 @@ public partial class TransferWindowScreen : Control
         foreach (var child in GetChildren())
             child.QueueFree();
 
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         // Header
-        root.AddChild(Theme.CreateLabel("💰 Transfer Window",
-            Theme.FontSizeTitle, Theme.Orange, HorizontalAlignment.Center));
-        root.AddChild(Theme.CreateLabel(
+        root.AddChild(UITheme.CreateLabel("💰 Transfer Window",
+            UITheme.FontSizeTitle, UITheme.Orange, HorizontalAlignment.Center));
+        root.AddChild(UITheme.CreateLabel(
             $"Budget: {_playerClub.Balance:C0}  |  Squad: {_playerClub.Team.Players.Count} players",
-            Theme.FontSizeBody, Theme.TextSecondary, HorizontalAlignment.Center));
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
 
         // Tab bar
         var tabs = new HBoxContainer();
@@ -58,9 +58,9 @@ public partial class TransferWindowScreen : Control
         var tabDefs = new[] { ("buy", "🛒 Buy"), ("sell", "💵 Sell"), ("youth", "🌱 Youth"), ("scout", "🔭 Scout") };
         foreach (var (id, label) in tabDefs)
         {
-            var btn = Theme.CreateButton(label,
-                _activeTab == id ? Theme.Orange : Theme.Border,
-                _activeTab == id ? Theme.TextLight : Theme.TextPrimary);
+            var btn = UITheme.CreateButton(label,
+                _activeTab == id ? UITheme.Orange : UITheme.Border,
+                _activeTab == id ? UITheme.TextLight : UITheme.TextPrimary);
             btn.CustomMinimumSize = new Vector2(140, 44);
             var capturedId = id;
             btn.Pressed += () => { _activeTab = capturedId; BuildUI(); };
@@ -85,15 +85,15 @@ public partial class TransferWindowScreen : Control
 
         // Bottom buttons
         var bottomHbox = new HBoxContainer();
-        bottomHbox.AddThemeConstantOverride("separation", Theme.Padding);
+        bottomHbox.AddThemeConstantOverride("separation", UITheme.Padding);
         root.AddChild(bottomHbox);
 
-        var doneBtn = Theme.CreateButton("✅ Done — Advance Day", Theme.Green);
+        var doneBtn = UITheme.CreateButton("✅ Done — Advance Day", UITheme.Green);
         doneBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         doneBtn.Pressed += OnDone;
         bottomHbox.AddChild(doneBtn);
 
-        var squadBtn = Theme.CreateButton("📋 Squad", Theme.BlueDark);
+        var squadBtn = UITheme.CreateButton("📋 Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
         bottomHbox.AddChild(squadBtn);
@@ -106,8 +106,8 @@ public partial class TransferWindowScreen : Control
 
         if (available.Count == 0)
         {
-            content.AddChild(Theme.CreateLabel("No players available for transfer.",
-                Theme.FontSizeBody, Theme.TextSecondary));
+            content.AddChild(UITheme.CreateLabel("No players available for transfer.",
+                UITheme.FontSizeBody, UITheme.TextSecondary));
             return;
         }
 
@@ -124,8 +124,8 @@ public partial class TransferWindowScreen : Control
 
         if (sellable.Count == 0)
         {
-            content.AddChild(Theme.CreateLabel("No players can be sold (squad at minimum).",
-                Theme.FontSizeBody, Theme.TextSecondary));
+            content.AddChild(UITheme.CreateLabel("No players can be sold (squad at minimum).",
+                UITheme.FontSizeBody, UITheme.TextSecondary));
             return;
         }
 
@@ -138,13 +138,13 @@ public partial class TransferWindowScreen : Control
 
     private void BuildYouthTab(VBoxContainer content)
     {
-        content.AddChild(Theme.CreateLabel("🌱 Youth Academy",
-            Theme.FontSizeHeading, Theme.Green));
-        content.AddChild(Theme.CreateLabel(
+        content.AddChild(UITheme.CreateLabel("🌱 Youth Academy",
+            UITheme.FontSizeHeading, UITheme.Green));
+        content.AddChild(UITheme.CreateLabel(
             "Generate 3 youth prospects. Pick one to join your squad.",
-            Theme.FontSizeSmall, Theme.TextSecondary));
+            UITheme.FontSizeSmall, UITheme.TextSecondary));
 
-        var generateBtn = Theme.CreateButton("🎴 Generate Prospects", Theme.Green);
+        var generateBtn = UITheme.CreateButton("🎴 Generate Prospects", UITheme.Green);
         generateBtn.Pressed += () =>
         {
             int nextId = _gameState.GetNextPlayerId(3);
@@ -155,12 +155,12 @@ public partial class TransferWindowScreen : Control
             foreach (var child in content.GetChildren())
                 child.QueueFree();
 
-            content.AddChild(Theme.CreateLabel("Choose a prospect:",
-                Theme.FontSizeHeading, Theme.Green));
+            content.AddChild(UITheme.CreateLabel("Choose a prospect:",
+                UITheme.FontSizeHeading, UITheme.Green));
 
             foreach (var p in prospects)
             {
-                var card = Theme.CreateCard();
+                var card = UITheme.CreateCard();
                 card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
                 content.AddChild(card);
 
@@ -168,18 +168,18 @@ public partial class TransferWindowScreen : Control
                 vbox.AddThemeConstantOverride("separation", 4);
                 card.AddChild(vbox);
 
-                float ovr = p.Prospect.PrimaryPosition == Position.GK
+                float ovr = p.Prospect.PrimaryPosition == PlayerPosition.GK
                     ? p.Prospect.Attributes.GoalkeeperOverall
                     : p.Prospect.Attributes.OutfieldOverall;
 
-                vbox.AddChild(Theme.CreateLabel(
+                vbox.AddChild(UITheme.CreateLabel(
                     $"{p.Prospect.Name} — {p.Prospect.PrimaryPosition} — Age {p.Prospect.Age}",
-                    Theme.FontSizeBody, Theme.TextPrimary));
-                vbox.AddChild(Theme.CreateLabel(
+                    UITheme.FontSizeBody, UITheme.TextPrimary));
+                vbox.AddChild(UITheme.CreateLabel(
                     $"Overall: {ovr:F0}  |  Fee: {p.Fee:C0}",
-                    Theme.FontSizeSmall, Theme.TextSecondary));
+                    UITheme.FontSizeSmall, UITheme.TextSecondary));
 
-                var recruitBtn = Theme.CreateButton("Recruit", Theme.Green);
+                var recruitBtn = UITheme.CreateButton("Recruit", UITheme.Green);
                 recruitBtn.CustomMinimumSize = new Vector2(120, 36);
                 var capturedP = p;
                 recruitBtn.Pressed += () =>
@@ -207,8 +207,8 @@ public partial class TransferWindowScreen : Control
 
     private void BuildScoutTab(VBoxContainer content)
     {
-        content.AddChild(Theme.CreateLabel("🔭 Scouting Regions",
-            Theme.FontSizeHeading, Theme.Blue));
+        content.AddChild(UITheme.CreateLabel("🔭 Scouting Regions",
+            UITheme.FontSizeHeading, UITheme.Blue));
 
         var regions = ScoutingSystem.GetRegions();
         foreach (var region in regions)
@@ -217,11 +217,11 @@ public partial class TransferWindowScreen : Control
             hbox.AddThemeConstantOverride("separation", 8);
             content.AddChild(hbox);
 
-            hbox.AddChild(Theme.CreateLabel(
+            hbox.AddChild(UITheme.CreateLabel(
                 $"{region.Name} — Cost: {region.Cost:C0}",
-                Theme.FontSizeBody, Theme.TextPrimary));
+                UITheme.FontSizeBody, UITheme.TextPrimary));
 
-            var scoutBtn = Theme.CreateButton("Scout", Theme.Blue);
+            var scoutBtn = UITheme.CreateButton("Scout", UITheme.Blue);
             scoutBtn.CustomMinimumSize = new Vector2(100, 36);
             var capturedRegion = region;
             scoutBtn.Pressed += () =>
@@ -237,28 +237,28 @@ public partial class TransferWindowScreen : Control
                     foreach (var child in content.GetChildren())
                         child.QueueFree();
 
-                    content.AddChild(Theme.CreateLabel(
+                    content.AddChild(UITheme.CreateLabel(
                         $"Scouted {players.Count} free agents from {capturedRegion.Name}:",
-                        Theme.FontSizeHeading, Theme.Blue));
+                        UITheme.FontSizeHeading, UITheme.Blue));
 
                     foreach (var p in players)
                     {
-                        var card = Theme.CreateCard();
+                        var card = UITheme.CreateCard();
                         content.AddChild(card);
 
                         var vbox = new VBoxContainer();
                         vbox.AddThemeConstantOverride("separation", 4);
                         card.AddChild(vbox);
 
-                        float ovr = p.PrimaryPosition == Position.GK
+                        float ovr = p.PrimaryPosition == PlayerPosition.GK
                             ? p.Attributes.GoalkeeperOverall
                             : p.Attributes.OutfieldOverall;
 
-                        vbox.AddChild(Theme.CreateLabel(
+                        vbox.AddChild(UITheme.CreateLabel(
                             $"{p.Name} — {p.PrimaryPosition} — Age {p.Age} — OVR {ovr:F0}",
-                            Theme.FontSizeBody, Theme.TextPrimary));
+                            UITheme.FontSizeBody, UITheme.TextPrimary));
 
-                        var signBtn = Theme.CreateButton("Sign (Free)", Theme.Green);
+                        var signBtn = UITheme.CreateButton("Sign (Free)", UITheme.Green);
                         signBtn.CustomMinimumSize = new Vector2(120, 36);
                         var capturedPlayer = p;
                         signBtn.Pressed += () =>
@@ -285,31 +285,31 @@ public partial class TransferWindowScreen : Control
 
     private PanelContainer CreatePlayerTransferCard(Player player, Club club, string action)
     {
-        var card = Theme.CreateCard();
+        var card = UITheme.CreateCard();
         card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
         var hbox = new HBoxContainer();
-        hbox.AddThemeConstantOverride("separation", Theme.Padding);
+        hbox.AddThemeConstantOverride("separation", UITheme.Padding);
         card.AddChild(hbox);
 
-        float ovr = player.PrimaryPosition == Position.GK
+        float ovr = player.PrimaryPosition == PlayerPosition.GK
             ? player.Attributes.GoalkeeperOverall
             : player.Attributes.OutfieldOverall;
         decimal value = PlayerValuation.Calculate(player, club.Reputation);
 
         var infoVbox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        infoVbox.AddChild(Theme.CreateLabel(
-            $"{player.Name}", Theme.FontSizeBody, Theme.TextPrimary));
-        infoVbox.AddChild(Theme.CreateLabel(
+        infoVbox.AddChild(UITheme.CreateLabel(
+            $"{player.Name}", UITheme.FontSizeBody, UITheme.TextPrimary));
+        infoVbox.AddChild(UITheme.CreateLabel(
             $"{player.PrimaryPosition} | Age {player.Age} | OVR {ovr:F0} | {club.Name}",
-            Theme.FontSizeSmall, Theme.TextSecondary));
-        infoVbox.AddChild(Theme.CreateLabel(
-            $"Value: {value:C0}", Theme.FontSizeSmall, Theme.Green));
+            UITheme.FontSizeSmall, UITheme.TextSecondary));
+        infoVbox.AddChild(UITheme.CreateLabel(
+            $"Value: {value:C0}", UITheme.FontSizeSmall, UITheme.Green));
         hbox.AddChild(infoVbox);
 
         if (action == "buy")
         {
-            var buyBtn = Theme.CreateButton($"Buy {value:C0}", Theme.Green);
+            var buyBtn = UITheme.CreateButton($"Buy {value:C0}", UITheme.Green);
             buyBtn.CustomMinimumSize = new Vector2(140, 40);
             buyBtn.Pressed += () =>
             {
@@ -332,7 +332,7 @@ public partial class TransferWindowScreen : Control
         }
         else if (action == "sell")
         {
-            var sellBtn = Theme.CreateButton($"Sell {value:C0}", Theme.Pink);
+            var sellBtn = UITheme.CreateButton($"Sell {value:C0}", UITheme.Pink);
             sellBtn.CustomMinimumSize = new Vector2(140, 40);
             sellBtn.Pressed += () =>
             {

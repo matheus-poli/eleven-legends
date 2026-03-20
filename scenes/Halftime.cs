@@ -4,7 +4,6 @@ using ElevenLegends.Data.Models;
 using ElevenLegends.Gacha;
 using ElevenLegends.Simulation;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -44,29 +43,29 @@ public partial class HalftimeScreen : Control
         foreach (var child in GetChildren())
             child.QueueFree();
 
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         var root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        root.AddThemeConstantOverride("separation", Theme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         // Score
-        var score = Theme.CreateLabel(
+        var score = UITheme.CreateLabel(
             $"⏱️ Half Time: {_config.HomeTeam.Name} {_matchState.ScoreHome} - {_matchState.ScoreAway} {_config.AwayTeam.Name}",
-            Theme.FontSizeHeading, Theme.TextPrimary, HorizontalAlignment.Center);
+            UITheme.FontSizeHeading, UITheme.TextPrimary, HorizontalAlignment.Center);
         root.AddChild(score);
 
         // Locker room cards section
-        root.AddChild(Theme.CreateLabel("🎴 Choose a Locker Room Card",
-            Theme.FontSizeHeading, Theme.Blue, HorizontalAlignment.Center));
+        root.AddChild(UITheme.CreateLabel("🎴 Choose a Locker Room Card",
+            UITheme.FontSizeHeading, UITheme.Blue, HorizontalAlignment.Center));
 
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
         int scoreDiff = isHome
@@ -85,7 +84,7 @@ public partial class HalftimeScreen : Control
         var cards = LockerRoomCardGenerator.Generate(
             new SeededRng(_config.Seed + 100), scoreDiff, avgStamina, avgMorale);
         var cardsHbox = new HBoxContainer();
-        cardsHbox.AddThemeConstantOverride("separation", Theme.Padding);
+        cardsHbox.AddThemeConstantOverride("separation", UITheme.Padding);
         root.AddChild(cardsHbox);
 
         foreach (var card in cards)
@@ -95,7 +94,7 @@ public partial class HalftimeScreen : Control
         }
 
         // Continue button
-        var continueBtn = Theme.CreateButton("▶️ Start Second Half", Theme.Green);
+        var continueBtn = UITheme.CreateButton("▶️ Start Second Half", UITheme.Green);
         continueBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         continueBtn.Pressed += OnContinue;
         root.AddChild(continueBtn);
@@ -103,7 +102,7 @@ public partial class HalftimeScreen : Control
 
     private PanelContainer CreateCardUI(LockerRoomCard card)
     {
-        var panel = Theme.CreateCard();
+        var panel = UITheme.CreateCard();
         panel.CustomMinimumSize = new Vector2(220, 160);
         panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
@@ -120,15 +119,15 @@ public partial class HalftimeScreen : Control
             _ => "🎴"
         };
 
-        vbox.AddChild(Theme.CreateLabel($"{emoji} {card.Name}",
-            Theme.FontSizeBody, Theme.TextPrimary, HorizontalAlignment.Center));
-        vbox.AddChild(Theme.CreateLabel(card.Description,
-            Theme.FontSizeSmall, Theme.TextSecondary, HorizontalAlignment.Center));
-        vbox.AddChild(Theme.CreateLabel($"+{card.Magnitude}",
-            Theme.FontSizeHeading, Theme.Green, HorizontalAlignment.Center));
+        vbox.AddChild(UITheme.CreateLabel($"{emoji} {card.Name}",
+            UITheme.FontSizeBody, UITheme.TextPrimary, HorizontalAlignment.Center));
+        vbox.AddChild(UITheme.CreateLabel(card.Description,
+            UITheme.FontSizeSmall, UITheme.TextSecondary, HorizontalAlignment.Center));
+        vbox.AddChild(UITheme.CreateLabel($"+{card.Magnitude}",
+            UITheme.FontSizeHeading, UITheme.Green, HorizontalAlignment.Center));
 
-        var selectBtn = Theme.CreateButton("Select",
-            _selectedCard?.Name == card.Name ? Theme.Green : Theme.Blue);
+        var selectBtn = UITheme.CreateButton("Select",
+            _selectedCard?.Name == card.Name ? UITheme.Green : UITheme.Blue);
         selectBtn.CustomMinimumSize = new Vector2(0, 40);
         var capturedCard = card;
         selectBtn.Pressed += () =>

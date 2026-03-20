@@ -4,7 +4,6 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Persistence;
 using ElevenLegends.UI;
-using Theme = ElevenLegends.UI.Theme;
 
 namespace ElevenLegends.Scenes;
 
@@ -35,18 +34,18 @@ public partial class DayHub : Control
         foreach (var child in GetChildren())
             child.QueueFree();
 
-        var bg = Theme.CreateBackground(Theme.Background);
+        var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
         _root = new VBoxContainer
         {
             AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = Theme.PaddingLarge,
-            OffsetRight = -Theme.PaddingLarge,
-            OffsetTop = Theme.Padding,
-            OffsetBottom = -Theme.Padding,
+            OffsetLeft = UITheme.PaddingLarge,
+            OffsetRight = -UITheme.PaddingLarge,
+            OffsetTop = UITheme.Padding,
+            OffsetBottom = -UITheme.Padding,
         };
-        _root.AddThemeConstantOverride("separation", Theme.Padding);
+        _root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(_root);
 
         // Top bar: Club name + money
@@ -65,24 +64,24 @@ public partial class DayHub : Control
     private void BuildTopBar()
     {
         var hbox = new HBoxContainer();
-        hbox.AddThemeConstantOverride("separation", Theme.Padding);
+        hbox.AddThemeConstantOverride("separation", UITheme.Padding);
         _root.AddChild(hbox);
 
-        var clubName = Theme.CreateLabel(
-            $"⚽ {_playerClub.Name}", Theme.FontSizeHeading, Theme.TextPrimary);
+        var clubName = UITheme.CreateLabel(
+            $"⚽ {_playerClub.Name}", UITheme.FontSizeHeading, UITheme.TextPrimary);
         clubName.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         hbox.AddChild(clubName);
 
-        var money = Theme.CreateLabel(
-            $"💰 {_playerClub.Balance:C0}", Theme.FontSizeBody, Theme.Green);
+        var money = UITheme.CreateLabel(
+            $"💰 {_playerClub.Balance:C0}", UITheme.FontSizeBody, UITheme.Green);
         hbox.AddChild(money);
 
-        var rep = Theme.CreateLabel(
-            $"⭐ {_gameState.Manager.Reputation}", Theme.FontSizeBody, Theme.Yellow);
+        var rep = UITheme.CreateLabel(
+            $"⭐ {_gameState.Manager.Reputation}", UITheme.FontSizeBody, UITheme.Yellow);
         hbox.AddChild(rep);
 
-        var squad = Theme.CreateLabel(
-            $"👥 {_playerClub.Team.Players.Count}", Theme.FontSizeBody, Theme.Blue);
+        var squad = UITheme.CreateLabel(
+            $"👥 {_playerClub.Team.Players.Count}", UITheme.FontSizeBody, UITheme.Blue);
         hbox.AddChild(squad);
     }
 
@@ -115,7 +114,7 @@ public partial class DayHub : Control
             _ => "Day"
         };
 
-        var card = Theme.CreateCard();
+        var card = UITheme.CreateCard();
         card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         _root.AddChild(card);
 
@@ -123,20 +122,20 @@ public partial class DayHub : Control
         cardContent.AddThemeConstantOverride("separation", 8);
         card.AddChild(cardContent);
 
-        var dayHeader = Theme.CreateLabel(
+        var dayHeader = UITheme.CreateLabel(
             $"{dayEmoji} Day {day.Day} — {dayName}",
-            Theme.FontSizeHeading, Theme.TextPrimary, HorizontalAlignment.Center);
+            UITheme.FontSizeHeading, UITheme.TextPrimary, HorizontalAlignment.Center);
         cardContent.AddChild(dayHeader);
 
-        var dayProgress = Theme.CreateLabel(
+        var dayProgress = UITheme.CreateLabel(
             $"Season progress: {_gameState.CurrentDayIndex + 1} / {_gameState.Calendar.Count}",
-            Theme.FontSizeSmall, Theme.TextSecondary, HorizontalAlignment.Center);
+            UITheme.FontSizeSmall, UITheme.TextSecondary, HorizontalAlignment.Center);
         cardContent.AddChild(dayProgress);
     }
 
     private void BuildCalendarPreview()
     {
-        var card = Theme.CreateCard();
+        var card = UITheme.CreateCard();
         _root.AddChild(card);
 
         var hbox = new HBoxContainer();
@@ -152,12 +151,12 @@ public partial class DayHub : Control
             var dayType = _gameState.Calendar[i].Type;
             Color color = dayType switch
             {
-                DayType.Training => Theme.Blue,
-                DayType.Rest => Theme.TextSecondary,
-                DayType.MatchDay => Theme.Green,
-                DayType.MundialMatchDay => Theme.Yellow,
-                DayType.TransferWindow => Theme.Orange,
-                _ => Theme.Border
+                DayType.Training => UITheme.Blue,
+                DayType.Rest => UITheme.TextSecondary,
+                DayType.MatchDay => UITheme.Green,
+                DayType.MundialMatchDay => UITheme.Yellow,
+                DayType.TransferWindow => UITheme.Orange,
+                _ => UITheme.Border
             };
 
             var dot = new ColorRect
@@ -176,44 +175,44 @@ public partial class DayHub : Control
             hbox.AddChild(dot);
         }
 
-        var legend = Theme.CreateLabel(
+        var legend = UITheme.CreateLabel(
             "🔵 Train  ⚪ Rest  🟢 National  🟡 Mundial  🟠 Transfers",
-            Theme.FontSizeCaption, Theme.TextSecondary);
+            UITheme.FontSizeCaption, UITheme.TextSecondary);
         hbox.AddChild(legend);
     }
 
     private void BuildActionButtons()
     {
         var hbox = new HBoxContainer();
-        hbox.AddThemeConstantOverride("separation", Theme.Padding);
+        hbox.AddThemeConstantOverride("separation", UITheme.Padding);
         _root.AddChild(hbox);
 
         var day = _gameState.CurrentDay;
 
         if (day.Type is DayType.MatchDay or DayType.MundialMatchDay)
         {
-            var matchBtn = Theme.CreateButton("⚽ Play Match", Theme.Green);
+            var matchBtn = UITheme.CreateButton("⚽ Play Match", UITheme.Green);
             matchBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             matchBtn.Pressed += OnPlayMatch;
             hbox.AddChild(matchBtn);
         }
         else if (day.Type == DayType.TransferWindow)
         {
-            var transferBtn = Theme.CreateButton("💰 Open Transfers", Theme.Orange);
+            var transferBtn = UITheme.CreateButton("💰 Open Transfers", UITheme.Orange);
             transferBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             transferBtn.Pressed += OnOpenTransfers;
             hbox.AddChild(transferBtn);
         }
         else
         {
-            var advanceBtn = Theme.CreateButton("⏭️ Advance Day", Theme.Blue);
+            var advanceBtn = UITheme.CreateButton("⏭️ Advance Day", UITheme.Blue);
             advanceBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             advanceBtn.Pressed += OnAdvanceDay;
             hbox.AddChild(advanceBtn);
         }
 
         // Squad button (always available)
-        var squadBtn = Theme.CreateButton("📋 Squad", Theme.BlueDark);
+        var squadBtn = UITheme.CreateButton("📋 Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
         hbox.AddChild(squadBtn);
