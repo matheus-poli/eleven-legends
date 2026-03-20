@@ -5,5 +5,6 @@ public enum DayType
     Training,
     Rest,
     MatchDay,
-    MundialMatchDay
+    MundialMatchDay,
+    TransferWindow
 }

@@ -4,6 +4,7 @@ using ElevenLegends.Data.Models;
 using ElevenLegends.Economy;
 using ElevenLegends.Manager;
 using ElevenLegends.Simulation;
+using ElevenLegends.Transfers;
 
 namespace ElevenLegends;
 
@@ -22,11 +23,15 @@ public sealed class GameState
     private int _nationalMatchDayCount;
     private int _mundialMatchDayCount;
     private int _daysSinceSalary;
+    private int _nextPlayerId;
+    private int _transferDayCount;
 
     public ManagerState Manager { get; }
     public IReadOnlyList<Club> Clubs => _clubs;
     public CompetitionManager Competition => _competition;
     public IReadOnlyList<SeasonDay> Calendar => _calendar;
+    public List<TransferRecord> TransferHistory { get; } = [];
+    public List<LoanRecord> ActiveLoans { get; } = [];
 
     public int CurrentDayIndex => _currentDayIndex;
     public SeasonDay CurrentDay => _calendar[_currentDayIndex];
@@ -39,6 +44,7 @@ public sealed class GameState
         _baseSeed = seed;
         _competition = new CompetitionManager(clubs, seed);
         _calendar = SeasonCalendar.BuildTemplate();
+        _nextPlayerId = YouthAcademy.GetMaxPlayerId(clubs) + 1;
     }
 
     /// <summary>
@@ -69,6 +75,10 @@ public sealed class GameState
 
             case DayType.MundialMatchDay:
                 ProcessMundialMatchDay(result);
+                break;
+
+            case DayType.TransferWindow:
+                ProcessTransferDay(result);
                 break;
         }
 
@@ -211,6 +221,44 @@ public sealed class GameState
         }
     }
 
+    private void ProcessTransferDay(DayResult result)
+    {
+        _transferDayCount++;
+        int daySeed = _baseSeed + CurrentDay.Day * 2000;
+        var rng = new SeededRng(daySeed);
+
+        // AI clubs make transfers
+        var aiRecords = AITransferAgent.ProcessDay(_clubs, Manager.ClubId, rng, ref _nextPlayerId);
+        TransferHistory.AddRange(aiRecords);
+        result.TransferRecords = aiRecords;
+    }
+
+    /// <summary>
+    /// Returns the next available player ID and increments the counter.
+    /// </summary>
+    public int GetNextPlayerId(int count = 1)
+    {
+        int id = _nextPlayerId;
+        _nextPlayerId += count;
+        return id;
+    }
+
+    /// <summary>
+    /// Records a player transfer in the history.
+    /// </summary>
+    public void RecordTransfer(TransferRecord record)
+    {
+        TransferHistory.Add(record);
+    }
+
+    /// <summary>
+    /// Records an active loan.
+    /// </summary>
+    public void RecordLoan(LoanRecord loan)
+    {
+        ActiveLoans.Add(loan);
+    }
+
     private void ProcessNationalMatchDay(DayResult result)
     {
         _nationalMatchDayCount++;
@@ -301,6 +349,7 @@ public sealed class DayResult
 {
     public required SeasonDay Day { get; init; }
     public IReadOnlyList<MatchFixture> Fixtures { get; set; } = [];
+    public IReadOnlyList<TransferRecord> TransferRecords { get; set; } = [];
     public bool GameOver { get; set; }
     public bool Victory { get; set; }
     public bool Finished { get; set; }

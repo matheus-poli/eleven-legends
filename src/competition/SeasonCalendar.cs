@@ -23,6 +23,7 @@ public static class SeasonCalendar
     /// <summary>
     /// Generates the complete season schedule. Match fixtures are filled in
     /// progressively as bracket rounds advance.
+    /// Now includes a transfer window between nationals and mundial.
     /// </summary>
     public static List<SeasonDay> BuildTemplate()
     {
@@ -30,7 +31,6 @@ public static class SeasonCalendar
         int day = 1;
 
         // Phase 1: National knockouts
-        // Training block before quarterfinals
         days.AddRange(TrainingBlock(ref day, 3));
         days.Add(new SeasonDay { Day = day++, Type = DayType.MatchDay });     // Quarterfinals
 
@@ -39,6 +39,12 @@ public static class SeasonCalendar
 
         days.AddRange(TrainingBlock(ref day, 2));
         days.Add(new SeasonDay { Day = day++, Type = DayType.MatchDay });     // Finals
+
+        // Transfer window between nationals and mundial
+        days.Add(new SeasonDay { Day = day++, Type = DayType.Rest });         // Rest before window
+        for (int i = 0; i < 5; i++)
+            days.Add(new SeasonDay { Day = day++, Type = DayType.TransferWindow });
+        days.Add(new SeasonDay { Day = day++, Type = DayType.Rest });         // Rest after window
 
         // Phase 2: Mundial
         days.AddRange(TrainingBlock(ref day, 3));

@@ -40,10 +40,15 @@ public static class ConsoleGame
             DayResult result;
 
             bool isMatchDay = day.Type is DayType.MatchDay or DayType.MundialMatchDay;
+            bool isTransferDay = day.Type == DayType.TransferWindow;
 
             if (isMatchDay)
             {
                 result = RunInteractiveMatchDay(gameState, playerClub, clubs);
+            }
+            else if (isTransferDay)
+            {
+                result = RunInteractiveTransferDay(gameState, playerClub, clubs);
             }
             else
             {
@@ -54,6 +59,18 @@ public static class ConsoleGame
             {
                 PrintFixtures(result.Fixtures, clubs, playerClub.Id);
                 PrintBracketStatus(gameState.Competition, clubs);
+            }
+
+            if (isTransferDay && result.TransferRecords.Count > 0)
+            {
+                System.Console.WriteLine("\n  📰 AI Transfer News:");
+                foreach (var tr in result.TransferRecords)
+                {
+                    var fromClub = clubs.FirstOrDefault(c => c.Id == tr.FromClubId);
+                    var toClub = clubs.FirstOrDefault(c => c.Id == tr.ToClubId);
+                    System.Console.WriteLine(
+                        $"    {tr.PlayerName}: {fromClub?.Name ?? "?"} → {toClub?.Name ?? "?"} ({tr.Fee:C0})");
+                }
             }
 
             PrintEconomy(playerClub, manager);
@@ -134,6 +151,34 @@ public static class ConsoleGame
     }
 
     /// <summary>
+    /// Runs an interactive transfer window day.
+    /// </summary>
+    private static DayResult RunInteractiveTransferDay(
+        GameState gameState, Club playerClub, List<Club> clubs)
+    {
+        // Count which transfer day this is (1-5)
+        int transferDayNum = 1;
+        for (int i = 0; i < gameState.CurrentDayIndex; i++)
+        {
+            if (gameState.Calendar[i].Type == DayType.TransferWindow)
+                transferDayNum++;
+        }
+
+        // Player's interactive transfers
+        var playerRecords = TransferWindowUI.RunTransferDay(gameState, playerClub, clubs, transferDayNum);
+
+        // Now advance the day (AI transfers + salary/career processing)
+        var result = gameState.AdvanceDay();
+
+        // Merge player's records into the result
+        var allRecords = new List<TransferRecord>(playerRecords);
+        allRecords.AddRange(result.TransferRecords);
+        result.TransferRecords = allRecords;
+
+        return result;
+    }
+
+    /// <summary>
     /// Runs a full season automatically (no user input). For testing.
     /// </summary>
     public static GameState RunAutomated(int seed, int clubId)
@@ -202,6 +247,7 @@ public static class ConsoleGame
             DayType.Training => "🏋️",
             DayType.MatchDay => "⚽",
             DayType.MundialMatchDay => "🏆",
+            DayType.TransferWindow => "🔄",
             DayType.Rest => "😴",
             _ => "📅"
         };
