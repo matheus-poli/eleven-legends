@@ -36,4 +36,16 @@ public sealed class MatchState
 
     /// <summary>Total ticks played so far.</summary>
     public int TotalTicksPlayed { get; set; }
+
+    /// <summary>Number of substitutions used by each team.</summary>
+    public int HomeSubstitutionsUsed { get; set; }
+    public int AwaySubstitutionsUsed { get; set; }
+
+    /// <summary>Active player IDs on the pitch for each team (updated on substitution).</summary>
+    public List<int> HomeActivePlayerIds { get; set; } = [];
+    public List<int> AwayActivePlayerIds { get; set; } = [];
+
+    /// <summary>Bonus modifiers from halftime cards, applied to success calculations in 2nd half.</summary>
+    public float HomeBonusModifier { get; set; }
+    public float AwayBonusModifier { get; set; }
 }

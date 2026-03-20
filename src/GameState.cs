@@ -3,12 +3,13 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Economy;
 using ElevenLegends.Manager;
+using ElevenLegends.Simulation;
 
 namespace ElevenLegends;
 
 /// <summary>
 /// Central game state. Tracks the current day, clubs, competitions, and manager.
-/// Call AdvanceDay() to progress the simulation one day at a time.
+/// Call AdvanceDay() for auto-mode, or use PrepareMatchDay/FinishDay for interactive mode.
 /// </summary>
 public sealed class GameState
 {
@@ -46,7 +47,7 @@ public sealed class GameState
     public Club PlayerClub => _clubs.First(c => c.Id == Manager.ClubId);
 
     /// <summary>
-    /// Advances one day. Returns a summary of what happened.
+    /// Advances one day automatically (no interactive decisions).
     /// </summary>
     public DayResult AdvanceDay()
     {
@@ -71,36 +72,134 @@ public sealed class GameState
                 break;
         }
 
-        // Weekly salary (every 7 days)
-        _daysSinceSalary++;
-        if (_daysSinceSalary >= 7)
+        FinishDayCommon(result);
+        return result;
+    }
+
+    /// <summary>
+    /// Prepares match day: generates fixtures, simulates all non-player matches.
+    /// Returns the player's fixture (if any) and all fixtures for the day.
+    /// Use this for interactive mode — call FinishDay() after resolving the player's match.
+    /// </summary>
+    public MatchDayContext PrepareMatchDay()
+    {
+        var day = CurrentDay;
+        bool isMundial = day.Type == DayType.MundialMatchDay;
+
+        List<MatchFixture> fixtures;
+        int daySeed;
+
+        if (isMundial)
         {
-            _daysSinceSalary = 0;
-            foreach (var club in _clubs)
-                EconomyProcessor.ProcessWeeklySalary(club);
-            CareerManager.PaySalary(Manager);
+            _mundialMatchDayCount++;
+            fixtures = _competition.GenerateMundialRound(day.Day);
+            daySeed = _baseSeed + day.Day * 1000 + 500;
+        }
+        else
+        {
+            _nationalMatchDayCount++;
+            fixtures = _competition.GenerateNationalRound(day.Day);
+            daySeed = _baseSeed + day.Day * 1000;
         }
 
-        // Check game end conditions
-        CareerManager.CheckDismissal(Manager, PlayerClub);
-        if (_competition.IsSeasonComplete())
-            CareerManager.CheckVictory(Manager, _competition.GetMundialChampion());
+        // Find player's fixture
+        MatchFixture? playerFixture = fixtures.FirstOrDefault(f =>
+            f.HomeClubId == Manager.ClubId || f.AwayClubId == Manager.ClubId);
 
-        _currentDayIndex++;
+        // Simulate all non-player fixtures
+        var otherFixtures = fixtures.Where(f => f != playerFixture).ToList();
+        _competition.SimulateFixtures(otherFixtures, daySeed);
 
-        if (CareerManager.IsGameOver(Manager))
-            result.GameOver = true;
-        if (CareerManager.IsVictory(Manager))
-            result.Victory = true;
-        if (_currentDayIndex >= _calendar.Count)
-            result.Finished = true;
+        // Compute the seed for the player's match
+        int playerMatchSeed = playerFixture != null
+            ? daySeed + fixtures.IndexOf(playerFixture)
+            : 0;
 
+        return new MatchDayContext
+        {
+            AllFixtures = fixtures,
+            PlayerFixture = playerFixture,
+            PlayerMatchSeed = playerMatchSeed,
+            IsMundial = isMundial
+        };
+    }
+
+    /// <summary>
+    /// Finishes a match day after the player's match has been resolved.
+    /// Records the player match result, processes economy, career, and advances the day.
+    /// </summary>
+    public DayResult FinishDay(MatchDayContext ctx, MatchResult? playerResult)
+    {
+        // Record player match result
+        if (ctx.PlayerFixture != null && playerResult != null)
+        {
+            ctx.PlayerFixture.Result = (
+                playerResult.FinalState.ScoreHome,
+                playerResult.FinalState.ScoreAway);
+        }
+
+        var result = new DayResult { Day = CurrentDay, Fixtures = ctx.AllFixtures };
+
+        // Economy for ALL fixtures
+        foreach (var fixture in ctx.AllFixtures)
+        {
+            var home = _clubs.First(c => c.Id == fixture.HomeClubId);
+            var away = _clubs.First(c => c.Id == fixture.AwayClubId);
+            var phase = fixture.Phase;
+            bool homeWon = fixture.WinnerClubId == home.Id;
+
+            EconomyProcessor.ProcessMatchDay(home, phase, homeWon);
+            EconomyProcessor.ProcessMatchDay(away, phase, !homeWon);
+        }
+
+        // Advance competition brackets
+        if (ctx.IsMundial)
+        {
+            _competition.AdvanceMundialRound();
+
+            // Update manager reputation
+            if (ctx.PlayerFixture != null)
+            {
+                bool advanced = ctx.PlayerFixture.WinnerClubId == Manager.ClubId;
+                CareerManager.UpdateReputation(Manager, ctx.PlayerFixture.Phase, advanced);
+            }
+        }
+        else
+        {
+            _competition.AdvanceNationalRounds();
+
+            if (_competition.AreNationalsFinished() && _competition.MundialBracket == null)
+                _competition.CreateMundial();
+        }
+
+        FinishDayCommon(result);
         return result;
+    }
+
+    /// <summary>
+    /// Returns the MatchConfig for the player's match based on tactical setup.
+    /// </summary>
+    public MatchConfig BuildPlayerMatchConfig(MatchDayContext ctx, TacticalSetup? tactics)
+    {
+        if (ctx.PlayerFixture == null)
+            throw new InvalidOperationException("No player fixture on this day.");
+
+        var homeClub = _clubs.First(c => c.Id == ctx.PlayerFixture.HomeClubId);
+        var awayClub = _clubs.First(c => c.Id == ctx.PlayerFixture.AwayClubId);
+        bool isHome = ctx.PlayerFixture.HomeClubId == Manager.ClubId;
+
+        return new MatchConfig
+        {
+            HomeTeam = homeClub.Team,
+            AwayTeam = awayClub.Team,
+            Seed = ctx.PlayerMatchSeed,
+            HomeTactics = isHome ? tactics : null,
+            AwayTactics = isHome ? null : tactics
+        };
     }
 
     private void ProcessTraining()
     {
-        // In the demo, training recovers morale slightly
         foreach (var club in _clubs)
         {
             var updatedPlayers = club.Team.Players.Select(p => p with
@@ -120,7 +219,6 @@ public sealed class GameState
         _competition.SimulateFixtures(fixtures, daySeed);
         result.Fixtures = fixtures;
 
-        // Economy: match revenue + prizes
         foreach (var fixture in fixtures)
         {
             var home = _clubs.First(c => c.Id == fixture.HomeClubId);
@@ -134,11 +232,8 @@ public sealed class GameState
 
         _competition.AdvanceNationalRounds();
 
-        // If nationals done, create mundial
         if (_competition.AreNationalsFinished() && _competition.MundialBracket == null)
-        {
             _competition.CreateMundial();
-        }
     }
 
     private void ProcessMundialMatchDay(DayResult result)
@@ -162,7 +257,6 @@ public sealed class GameState
 
         _competition.AdvanceMundialRound();
 
-        // Update manager reputation based on player's club performance
         var playerFixture = fixtures.FirstOrDefault(f =>
             f.HomeClubId == Manager.ClubId || f.AwayClubId == Manager.ClubId);
         if (playerFixture != null)
@@ -172,7 +266,32 @@ public sealed class GameState
         }
     }
 
+    private void FinishDayCommon(DayResult result)
+    {
+        // Weekly salary (every 7 days)
+        _daysSinceSalary++;
+        if (_daysSinceSalary >= 7)
+        {
+            _daysSinceSalary = 0;
+            foreach (var club in _clubs)
+                EconomyProcessor.ProcessWeeklySalary(club);
+            CareerManager.PaySalary(Manager);
+        }
 
+        // Check game end conditions
+        CareerManager.CheckDismissal(Manager, PlayerClub);
+        if (_competition.IsSeasonComplete())
+            CareerManager.CheckVictory(Manager, _competition.GetMundialChampion());
+
+        _currentDayIndex++;
+
+        if (CareerManager.IsGameOver(Manager))
+            result.GameOver = true;
+        if (CareerManager.IsVictory(Manager))
+            result.Victory = true;
+        if (_currentDayIndex >= _calendar.Count)
+            result.Finished = true;
+    }
 }
 
 /// <summary>
@@ -185,4 +304,15 @@ public sealed class DayResult
     public bool GameOver { get; set; }
     public bool Victory { get; set; }
     public bool Finished { get; set; }
+}
+
+/// <summary>
+/// Context for an interactive match day. Created by PrepareMatchDay(), consumed by FinishDay().
+/// </summary>
+public sealed class MatchDayContext
+{
+    public required List<MatchFixture> AllFixtures { get; init; }
+    public MatchFixture? PlayerFixture { get; init; }
+    public int PlayerMatchSeed { get; init; }
+    public bool IsMundial { get; init; }
 }

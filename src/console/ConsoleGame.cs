@@ -3,6 +3,7 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Generators;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Manager;
+using ElevenLegends.Simulation;
 
 namespace ElevenLegends.Console;
 
@@ -36,9 +37,20 @@ public static class ConsoleGame
             var day = gameState.CurrentDay;
             PrintDaySeparator(day);
 
-            var result = gameState.AdvanceDay();
+            DayResult result;
 
-            if (day.Type is DayType.MatchDay or DayType.MundialMatchDay)
+            bool isMatchDay = day.Type is DayType.MatchDay or DayType.MundialMatchDay;
+
+            if (isMatchDay)
+            {
+                result = RunInteractiveMatchDay(gameState, playerClub, clubs);
+            }
+            else
+            {
+                result = gameState.AdvanceDay();
+            }
+
+            if (isMatchDay)
             {
                 PrintFixtures(result.Fixtures, clubs, playerClub.Id);
                 PrintBracketStatus(gameState.Competition, clubs);
@@ -66,6 +78,59 @@ public static class ConsoleGame
 
             WaitForInput();
         }
+    }
+
+    /// <summary>
+    /// Runs an interactive match day: pre-match UI → first half → halftime UI → second half.
+    /// </summary>
+    private static DayResult RunInteractiveMatchDay(
+        GameState gameState, Club playerClub, List<Club> clubs)
+    {
+        var ctx = gameState.PrepareMatchDay();
+
+        if (ctx.PlayerFixture == null)
+        {
+            // Player's club eliminated — just finish the day
+            return gameState.FinishDay(ctx, null);
+        }
+
+        bool isHome = ctx.PlayerFixture.HomeClubId == playerClub.Id;
+        var opponentClub = clubs.First(c => c.Id ==
+            (isHome ? ctx.PlayerFixture.AwayClubId : ctx.PlayerFixture.HomeClubId));
+
+        System.Console.WriteLine($"\n  ⚽ YOUR MATCH: {playerClub.Name} vs {opponentClub.Name}");
+
+        // Pre-match: tactical decisions
+        var tactics = PreMatchUI.Prompt(playerClub);
+        var config = gameState.BuildPlayerMatchConfig(ctx, tactics);
+
+        // Simulate first half
+        System.Console.WriteLine("\n  ⏱️ Simulating first half...");
+        var (state, rng) = MatchSimulator.SimulateFirstHalf(config);
+
+        // Show halftime summary
+        MatchEventDisplay.PrintHalftimeSummary(
+            state, playerClub.Team, opponentClub.Team, isHome);
+
+        // Halftime decisions: cards + substitutions
+        var (card, subs) = HalftimeUI.Prompt(
+            state, config, playerClub.Team, isHome, rng);
+
+        // Apply halftime effects
+        if (card != null)
+            HalftimeProcessor.ApplyCard(state, config, card, isHome);
+        if (subs.Count > 0)
+            HalftimeProcessor.ApplySubstitutions(state, config, subs, isHome);
+
+        // Simulate second half
+        System.Console.WriteLine("\n  ⏱️ Simulating second half...");
+        var matchResult = MatchSimulator.SimulateSecondHalf(state, config, rng);
+
+        // Show final result
+        MatchEventDisplay.PrintMatchResult(
+            matchResult, playerClub.Team, opponentClub.Team, isHome);
+
+        return gameState.FinishDay(ctx, matchResult);
     }
 
     /// <summary>

@@ -30,19 +30,25 @@ public static class TickProcessor
         if (state.TotalTicksPlayed > 0)
             state.PossessionHome = (float)state.HomePossessionTicks / state.TotalTicksPlayed;
 
-        Team attackingTeam = possessionTeamId == config.HomeTeam.Id ? config.HomeTeam : config.AwayTeam;
-        Team defendingTeam = possessionTeamId == config.HomeTeam.Id ? config.AwayTeam : config.HomeTeam;
+        bool isHomeAttacking = possessionTeamId == config.HomeTeam.Id;
+        Team attackingTeam = isHomeAttacking ? config.HomeTeam : config.AwayTeam;
+        Team defendingTeam = isHomeAttacking ? config.AwayTeam : config.HomeTeam;
+
+        // Use active player IDs for executor selection (supports substitutions)
+        var attackActiveIds = isHomeAttacking ? state.HomeActivePlayerIds : state.AwayActivePlayerIds;
+        var defenseActiveIds = isHomeAttacking ? state.AwayActivePlayerIds : state.HomeActivePlayerIds;
 
         // 2. Choose action for the attacking team
         ActionType attackAction = ActionSelector.SelectAction(state.BallZone, hasPossession: true, rng);
 
-        // 3. Select executor
-        Player executor = ActionSelector.SelectExecutor(attackingTeam, attackAction, state, rng);
+        // 3. Select executor (use active IDs if available)
+        Player executor = ActionSelector.SelectExecutor(attackingTeam, attackAction, state, rng, attackActiveIds);
 
-        // 4-5. Calculate success and apply result
+        // 4-5. Calculate success and apply result (with bonus modifier)
+        float bonusModifier = isHomeAttacking ? state.HomeBonusModifier : state.AwayBonusModifier;
         ActionResult attackResult = ActionResolver.ResolveAttack(
             executor, attackAction, executor.PrimaryPosition,
-            defendingTeam, state, rng);
+            defendingTeam, state, rng, bonusModifier, defenseActiveIds);
 
         // Track the last successful passer for potential assists
         Player? assistProvider = null;
@@ -123,13 +129,20 @@ public static class TickProcessor
     /// </summary>
     public static void InitializeStamina(MatchState state, MatchConfig config)
     {
-        foreach (int playerId in config.HomeTeam.StartingLineup)
+        var homeIds = state.HomeActivePlayerIds.Count > 0
+            ? state.HomeActivePlayerIds
+            : (IReadOnlyList<int>)config.HomeTeam.StartingLineup;
+        var awayIds = state.AwayActivePlayerIds.Count > 0
+            ? state.AwayActivePlayerIds
+            : (IReadOnlyList<int>)config.AwayTeam.StartingLineup;
+
+        foreach (int playerId in homeIds)
         {
             Player? player = config.HomeTeam.Players.FirstOrDefault(p => p.Id == playerId);
             if (player != null)
                 state.PlayerStamina[playerId] = player.Attributes.Stamina;
         }
-        foreach (int playerId in config.AwayTeam.StartingLineup)
+        foreach (int playerId in awayIds)
         {
             Player? player = config.AwayTeam.Players.FirstOrDefault(p => p.Id == playerId);
             if (player != null)
@@ -139,10 +152,15 @@ public static class TickProcessor
 
     private static void DegradeStamina(MatchState state, MatchConfig config)
     {
-        var allStarting = config.HomeTeam.StartingLineup
-            .Concat(config.AwayTeam.StartingLineup);
+        // Use active player IDs (supports substitutions)
+        var homeIds = state.HomeActivePlayerIds.Count > 0
+            ? state.HomeActivePlayerIds
+            : (IReadOnlyList<int>)config.HomeTeam.StartingLineup;
+        var awayIds = state.AwayActivePlayerIds.Count > 0
+            ? state.AwayActivePlayerIds
+            : (IReadOnlyList<int>)config.AwayTeam.StartingLineup;
 
-        foreach (int playerId in allStarting)
+        foreach (int playerId in homeIds.Concat(awayIds))
         {
             if (state.PlayerStamina.ContainsKey(playerId))
             {

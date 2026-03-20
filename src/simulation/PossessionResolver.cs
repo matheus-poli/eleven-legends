@@ -29,11 +29,22 @@ public static class PossessionResolver
         else if (state.BallPossessionTeamId == config.AwayTeam.Id)
             homeChance -= 0.05f;
 
+        // Tactical style modifier
+        homeChance += GetTacticalModifier(config.HomeTactics?.Style);
+        homeChance -= GetTacticalModifier(config.AwayTactics?.Style);
+
         homeChance = Math.Clamp(homeChance, 0.15f, 0.85f);
 
         float roll = rng.NextFloat(0f, 1f);
         return roll < homeChance ? config.HomeTeam.Id : config.AwayTeam.Id;
     }
+
+    private static float GetTacticalModifier(TacticalStyle? style) => style switch
+    {
+        TacticalStyle.Attacking => 0.06f,
+        TacticalStyle.Defensive => -0.06f,
+        _ => 0f
+    };
 
     /// <summary>
     /// Calculates midfield strength as the average of passing + decisions + composure

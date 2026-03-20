@@ -17,9 +17,11 @@ public static class SuccessCalculator
     /// <param name="assignedPosition">The position the player is currently playing.</param>
     /// <param name="rng">Injected RNG for determinism.</param>
     /// <returns>True if the action succeeds, false otherwise.</returns>
-    public static bool Calculate(Player player, ActionType action, Position assignedPosition, IRng rng)
+    public static bool Calculate(
+        Player player, ActionType action, Position assignedPosition, IRng rng,
+        float bonusModifier = 0f)
     {
-        float successChance = CalculateRaw(player, action, assignedPosition, rng);
+        float successChance = CalculateRaw(player, action, assignedPosition, rng) + bonusModifier;
         float threshold = GetThreshold(action);
         return successChance >= threshold;
     }

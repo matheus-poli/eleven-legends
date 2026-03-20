@@ -38,18 +38,20 @@ public static class ActionSelector
     /// Selects the best player to execute the action from the team's starting lineup.
     /// Picks the player with the highest relevant attribute (with some RNG variance).
     /// </summary>
-    public static Player SelectExecutor(Team team, ActionType action, MatchState state, IRng rng)
+    public static Player SelectExecutor(
+        Team team, ActionType action, MatchState state, IRng rng,
+        IReadOnlyList<int>? activePlayerIds = null)
     {
-        var startingSet = new HashSet<int>(team.StartingLineup);
+        var activeSet = new HashSet<int>(
+            activePlayerIds is { Count: > 0 } ? activePlayerIds : team.StartingLineup);
         var candidates = team.Players
-            .Where(p => startingSet.Contains(p.Id))
+            .Where(p => activeSet.Contains(p.Id))
             .Where(p => IsEligibleForAction(p, action, state))
             .ToList();
 
         if (candidates.Count == 0)
         {
-            // Fallback: pick any starting player
-            candidates = team.Players.Where(p => startingSet.Contains(p.Id)).ToList();
+            candidates = team.Players.Where(p => activeSet.Contains(p.Id)).ToList();
         }
 
         // Weighted selection: higher attribute = higher chance of being selected

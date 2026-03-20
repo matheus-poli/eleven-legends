@@ -18,9 +18,16 @@ public static class RatingCalculator
     /// </summary>
     public static void InitializeRatings(MatchState state, MatchConfig config)
     {
-        foreach (int playerId in config.HomeTeam.StartingLineup)
+        var homeIds = state.HomeActivePlayerIds.Count > 0
+            ? state.HomeActivePlayerIds
+            : (IReadOnlyList<int>)config.HomeTeam.StartingLineup;
+        var awayIds = state.AwayActivePlayerIds.Count > 0
+            ? state.AwayActivePlayerIds
+            : (IReadOnlyList<int>)config.AwayTeam.StartingLineup;
+
+        foreach (int playerId in homeIds)
             state.PlayerRatings[playerId] = BaseRating;
-        foreach (int playerId in config.AwayTeam.StartingLineup)
+        foreach (int playerId in awayIds)
             state.PlayerRatings[playerId] = BaseRating;
     }
 

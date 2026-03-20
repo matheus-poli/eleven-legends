@@ -36,12 +36,13 @@ public static class ActionResolver
     /// </summary>
     public static ActionResult ResolveAttack(
         Player executor, ActionType action, Position assignedPosition,
-        Team defendingTeam, MatchState state, IRng rng)
+        Team defendingTeam, MatchState state, IRng rng,
+        float bonusModifier = 0f, IReadOnlyList<int>? defenseActiveIds = null)
     {
-        bool success = SuccessCalculator.Calculate(executor, action, assignedPosition, rng);
+        bool success = SuccessCalculator.Calculate(executor, action, assignedPosition, rng, bonusModifier);
 
         if (action == ActionType.Shot)
-            return ResolveShotAction(executor, assignedPosition, success, defendingTeam, state, rng);
+            return ResolveShotAction(executor, assignedPosition, success, defendingTeam, state, rng, defenseActiveIds);
 
         return new ActionResult
         {
@@ -73,7 +74,8 @@ public static class ActionResolver
 
     private static ActionResult ResolveShotAction(
         Player executor, Position assignedPosition, bool shotSuccess,
-        Team defendingTeam, MatchState state, IRng rng)
+        Team defendingTeam, MatchState state, IRng rng,
+        IReadOnlyList<int>? defenseActiveIds = null)
     {
         if (!shotSuccess)
         {
@@ -87,7 +89,7 @@ public static class ActionResolver
         }
 
         // Shot was on target — does the goalkeeper save it?
-        bool isSaved = TryGoalkeeperSave(defendingTeam, state, rng);
+        bool isSaved = TryGoalkeeperSave(defendingTeam, state, rng, defenseActiveIds);
 
         return new ActionResult
         {
@@ -99,11 +101,14 @@ public static class ActionResolver
         };
     }
 
-    private static bool TryGoalkeeperSave(Team defendingTeam, MatchState state, IRng rng)
+    private static bool TryGoalkeeperSave(
+        Team defendingTeam, MatchState state, IRng rng,
+        IReadOnlyList<int>? activeIds = null)
     {
-        var startingSet = new HashSet<int>(defendingTeam.StartingLineup);
+        var playerIds = activeIds ?? defendingTeam.StartingLineup;
+        var activeSet = new HashSet<int>(playerIds);
         Player? goalkeeper = defendingTeam.Players
-            .FirstOrDefault(p => startingSet.Contains(p.Id) && p.PrimaryPosition == Position.GK);
+            .FirstOrDefault(p => activeSet.Contains(p.Id) && p.PrimaryPosition == Position.GK);
 
         if (goalkeeper == null)
             return false; // no GK = always concedes
