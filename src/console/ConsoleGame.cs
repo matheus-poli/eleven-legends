@@ -3,6 +3,7 @@ using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Generators;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Manager;
+using ElevenLegends.Persistence;
 using ElevenLegends.Simulation;
 
 namespace ElevenLegends.Console;
@@ -16,17 +17,38 @@ public static class ConsoleGame
     {
         PrintHeader();
 
-        var clubs = TeamGenerator.Generate(seed);
-        var playerClub = ChooseClub(clubs);
+        var savesDir = Path.Combine(Directory.GetCurrentDirectory(), "saves");
+        var saveManager = new SaveManager(savesDir);
 
-        var manager = new ManagerState
+        GameState gameState;
+        Club playerClub;
+        List<Club> clubs;
+
+        // Check for existing save
+        if (saveManager.HasAutoSave())
         {
-            Name = "You",
-            ClubId = playerClub.Id,
-            Reputation = 50
-        };
+            System.Console.WriteLine("💾 Autosave found!");
+            System.Console.Write("  [C]ontinue or [N]ew game? ");
+            var choice = System.Console.ReadLine()?.Trim().ToUpperInvariant();
 
-        var gameState = new GameState(clubs, manager, seed);
+            if (choice == "C")
+            {
+                gameState = saveManager.LoadGame("autosave");
+                clubs = gameState.Clubs.ToList();
+                playerClub = gameState.PlayerClub;
+                System.Console.WriteLine($"  ✅ Loaded! Day {gameState.CurrentDayIndex + 1}, managing {playerClub.Name}");
+            }
+            else
+            {
+                (gameState, playerClub, clubs) = StartNewGame(seed);
+            }
+        }
+        else
+        {
+            (gameState, playerClub, clubs) = StartNewGame(seed);
+        }
+
+        var manager = gameState.Manager;
 
         System.Console.WriteLine($"\n⚽ Season begins! You manage {playerClub.Name} ({playerClub.Country})");
         System.Console.WriteLine($"💰 Club balance: {playerClub.Balance:C0}");
@@ -75,6 +97,10 @@ public static class ConsoleGame
 
             PrintEconomy(playerClub, manager);
 
+            // Autosave after each day
+            try { saveManager.AutoSave(gameState); }
+            catch { /* Don't crash the game if save fails */ }
+
             if (result.Victory)
             {
                 PrintVictory(playerClub);
@@ -95,6 +121,22 @@ public static class ConsoleGame
 
             WaitForInput();
         }
+    }
+
+    private static (GameState gameState, Club playerClub, List<Club> clubs) StartNewGame(int seed)
+    {
+        var clubs = TeamGenerator.Generate(seed);
+        var playerClub = ChooseClub(clubs);
+
+        var manager = new ManagerState
+        {
+            Name = "You",
+            ClubId = playerClub.Id,
+            Reputation = 50
+        };
+
+        var gameState = new GameState(clubs, manager, seed);
+        return (gameState, playerClub, clubs);
     }
 
     /// <summary>

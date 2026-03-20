@@ -34,6 +34,23 @@ public sealed class CompetitionManager
     }
 
     /// <summary>
+    /// Restores a competition manager from saved state. Used by the persistence layer.
+    /// </summary>
+    internal static CompetitionManager Restore(
+        List<Club> clubs,
+        int baseSeed,
+        Dictionary<string, KnockoutBracket> nationalBrackets,
+        MundialBracket? mundialBracket)
+    {
+        var cm = new CompetitionManager(clubs, baseSeed);
+        cm._nationalBrackets.Clear();
+        foreach (var kvp in nationalBrackets)
+            cm._nationalBrackets[kvp.Key] = kvp.Value;
+        cm._mundialBracket = mundialBracket;
+        return cm;
+    }
+
+    /// <summary>
     /// Generates fixtures for the current national round across all countries.
     /// </summary>
     public List<MatchFixture> GenerateNationalRound(int matchDay)

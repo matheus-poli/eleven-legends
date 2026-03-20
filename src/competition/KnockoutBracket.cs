@@ -28,6 +28,24 @@ public sealed class KnockoutBracket
     }
 
     /// <summary>
+    /// Restores a bracket from saved state. Used by the persistence layer.
+    /// </summary>
+    internal static KnockoutBracket Restore(
+        IReadOnlyList<int> initialTeamIds,
+        List<MatchFixture> fixtures,
+        CompetitionPhase currentPhase,
+        List<int> advancingTeams,
+        int? championId)
+    {
+        var bracket = new KnockoutBracket(initialTeamIds);
+        bracket._fixtures.AddRange(fixtures);
+        bracket._currentPhase = currentPhase;
+        bracket._advancingTeams = advancingTeams;
+        bracket._championId = championId;
+        return bracket;
+    }
+
+    /// <summary>
     /// Generates fixtures for the current phase. Returns them for scheduling.
     /// </summary>
     public IReadOnlyList<MatchFixture> GenerateNextRound(int startDay)

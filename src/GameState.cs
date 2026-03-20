@@ -15,8 +15,8 @@ namespace ElevenLegends;
 public sealed class GameState
 {
     private readonly List<Club> _clubs;
-    private readonly CompetitionManager _competition;
-    private readonly List<SeasonDay> _calendar;
+    private CompetitionManager _competition;
+    private List<SeasonDay> _calendar;
     private readonly int _baseSeed;
 
     private int _currentDayIndex;
@@ -37,6 +37,14 @@ public sealed class GameState
     public SeasonDay CurrentDay => _calendar[_currentDayIndex];
     public bool IsSeasonOver => _currentDayIndex >= _calendar.Count;
 
+    // Exposed for persistence
+    internal int BaseSeed => _baseSeed;
+    internal int NationalMatchDayCount => _nationalMatchDayCount;
+    internal int MundialMatchDayCount => _mundialMatchDayCount;
+    internal int DaysSinceSalary => _daysSinceSalary;
+    internal int NextPlayerId => _nextPlayerId;
+    internal int TransferDayCount => _transferDayCount;
+
     public GameState(List<Club> clubs, ManagerState manager, int seed)
     {
         _clubs = clubs;
@@ -45,6 +53,56 @@ public sealed class GameState
         _competition = new CompetitionManager(clubs, seed);
         _calendar = SeasonCalendar.BuildTemplate();
         _nextPlayerId = YouthAcademy.GetMaxPlayerId(clubs) + 1;
+    }
+
+    /// <summary>
+    /// Restores a GameState from saved data. Used by the persistence layer.
+    /// </summary>
+    internal static GameState Restore(
+        List<Club> clubs,
+        ManagerState manager,
+        int baseSeed,
+        CompetitionManager competition,
+        List<SeasonDay> calendar,
+        int currentDayIndex,
+        int nationalMatchDayCount,
+        int mundialMatchDayCount,
+        int daysSinceSalary,
+        int nextPlayerId,
+        int transferDayCount,
+        List<TransferRecord> transferHistory,
+        List<LoanRecord> activeLoans)
+    {
+        var gs = new GameState(clubs, manager, baseSeed);
+
+        // Replace auto-created state with saved state
+        // Use reflection-free approach: reconstruct then overwrite
+        gs._currentDayIndex = currentDayIndex;
+        gs._nationalMatchDayCount = nationalMatchDayCount;
+        gs._mundialMatchDayCount = mundialMatchDayCount;
+        gs._daysSinceSalary = daysSinceSalary;
+        gs._nextPlayerId = nextPlayerId;
+        gs._transferDayCount = transferDayCount;
+        gs.TransferHistory.AddRange(transferHistory);
+        gs.ActiveLoans.AddRange(activeLoans);
+
+        return gs;
+    }
+
+    /// <summary>
+    /// Restores using a pre-built CompetitionManager.
+    /// </summary>
+    internal void ReplaceCompetition(CompetitionManager competition)
+    {
+        _competition = competition;
+    }
+
+    /// <summary>
+    /// Replaces the calendar with saved calendar data.
+    /// </summary>
+    internal void ReplaceCalendar(List<SeasonDay> calendar)
+    {
+        _calendar = calendar;
     }
 
     /// <summary>
