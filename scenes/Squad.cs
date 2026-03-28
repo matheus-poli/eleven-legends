@@ -15,6 +15,9 @@ namespace ElevenLegends.Scenes;
 /// </summary>
 public partial class Squad : Control
 {
+    /// <summary>Set before navigating to Squad to control where Back returns to.</summary>
+    public static string ReturnScene = "res://scenes/DayHub.tscn";
+
     private GameState _gameState = null!;
     private Club _playerClub = null!;
     private PitchView _pitchView = null!;
@@ -62,7 +65,7 @@ public partial class Squad : Control
 
         var backBtn = UITheme.CreateFlatButton("Back", UITheme.Border, UITheme.TextPrimary);
         backBtn.Pressed += () =>
-            SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
+            SceneManager.Instance.ChangeScene(ReturnScene);
         topBar.AddChild(backBtn);
 
         // ─── Formation selector row ──────────────────────────────

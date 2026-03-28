@@ -128,23 +128,17 @@ public partial class PreMatch : Control
         foreach (TacticalStyle style in System.Enum.GetValues<TacticalStyle>())
         {
             bool sel = style == _selectedStyle;
-            (string iconName, Color color) = style switch
+            Color color = style switch
             {
-                TacticalStyle.Attacking => ("sword", UITheme.Red),
-                TacticalStyle.Defensive => ("shield-check", UITheme.Blue),
-                _ => ("scale", UITheme.Green),
+                TacticalStyle.Attacking => UITheme.Red,
+                TacticalStyle.Defensive => UITheme.Blue,
+                _ => UITheme.Green,
             };
 
-            var btnRow = UITheme.CreateIconLabel(iconName, $"{style}",
-                UITheme.FontSizeSmall, sel ? UITheme.TextLight : UITheme.TextPrimary,
-                iconTint: sel ? UITheme.TextLight : color);
-
-            var btn = UITheme.CreateFlatButton("",
-                sel ? color : UITheme.Border);
-            btn.CustomMinimumSize = new Vector2(130, 40);
-            // Replace the flat button's child with our icon+label
-            foreach (Node child in btn.GetChildren()) child.QueueFree();
-            btn.AddChild(btnRow);
+            var btn = UITheme.CreateFlatButton($"{style}",
+                sel ? color : UITheme.Border,
+                sel ? UITheme.TextLight : UITheme.TextPrimary);
+            btn.CustomMinimumSize = new Vector2(120, 40);
             TacticalStyle captured = style;
             btn.Pressed += () => { _selectedStyle = captured; BuildUI(); };
             styleRow.AddChild(btn);
@@ -157,7 +151,10 @@ public partial class PreMatch : Control
 
         var squadBtn = UITheme.CreateButton("Edit Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
+        {
+            Squad.ReturnScene = "res://scenes/PreMatch.tscn";
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
+        };
         actionRow.AddChild(squadBtn);
 
         var startBtn = UITheme.CreateButton("Start Match!", UITheme.Green);

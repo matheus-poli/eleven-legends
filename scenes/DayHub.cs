@@ -260,7 +260,10 @@ public partial class DayHub : Control
 
         var squadBtn = UITheme.CreateButton("Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
+        {
+            Squad.ReturnScene = "res://scenes/DayHub.tscn";
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
+        };
         hbox.AddChild(squadBtn);
     }
 

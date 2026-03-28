@@ -169,7 +169,10 @@ public partial class TransferWindow : Control
 
         var squadBtn = UITheme.CreateButton("Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
+        {
+            Squad.ReturnScene = "res://scenes/TransferWindow.tscn";
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
+        };
         bottomRow.AddChild(squadBtn);
 
         Anim.StaggerChildren(content, stagger: 0.02f, useScale: false);
