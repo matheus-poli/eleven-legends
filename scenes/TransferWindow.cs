@@ -9,7 +9,7 @@ using ElevenLegends.UI;
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Transfer Window screen — buy, sell, loan, youth, scout.
+/// Transfer Window — buy, sell, youth academy, scouting with Duolingo-style cards.
 /// </summary>
 public partial class TransferWindowScreen : Control
 {
@@ -26,7 +26,7 @@ public partial class TransferWindowScreen : Control
 
     private void BuildUI()
     {
-        foreach (var child in GetChildren())
+        foreach (Node child in GetChildren())
             child.QueueFree();
 
         var bg = UITheme.CreateBackground(UITheme.Background);
@@ -43,35 +43,57 @@ public partial class TransferWindowScreen : Control
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
-        // Header
-        root.AddChild(UITheme.CreateLabel("💰 Transfer Window",
-            UITheme.FontSizeTitle, UITheme.Orange, HorizontalAlignment.Center));
-        root.AddChild(UITheme.CreateLabel(
-            $"Budget: {_playerClub.Balance:C0}  |  Squad: {_playerClub.Team.Players.Count} players",
-            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
+        // ─── Header card ──────────────────────────────────────────
+        var headerCard = UITheme.CreateCard(UITheme.Orange);
+        root.AddChild(headerCard);
 
-        // Tab bar
+        var headerVbox = new VBoxContainer();
+        headerVbox.AddThemeConstantOverride("separation", 4);
+        headerCard.AddChild(headerVbox);
+
+        headerVbox.AddChild(UITheme.CreateLabel("Transfer Window",
+            UITheme.FontSizeTitle, UITheme.Orange, HorizontalAlignment.Center));
+        headerVbox.AddChild(UITheme.CreateLabel(
+            $"Budget: {FormatMoney(_playerClub.Balance)}  •  Squad: {_playerClub.Team.Players.Count}",
+            UITheme.FontSizeSmall, UITheme.TextSecondary, HorizontalAlignment.Center));
+
+        // ─── Tab bar ──────────────────────────────────────────────
         var tabs = new HBoxContainer();
         tabs.AddThemeConstantOverride("separation", 8);
         root.AddChild(tabs);
 
-        var tabDefs = new[] { ("buy", "🛒 Buy"), ("sell", "💵 Sell"), ("youth", "🌱 Youth"), ("scout", "🔭 Scout") };
-        foreach (var (id, label) in tabDefs)
+        (string id, string label, Color color)[] tabDefs =
+        [
+            ("buy", "Buy", UITheme.Green),
+            ("sell", "Sell", UITheme.Red),
+            ("youth", "Youth", UITheme.Blue),
+            ("scout", "Scout", UITheme.Purple),
+        ];
+
+        foreach ((string id, string label, Color color) in tabDefs)
         {
-            var btn = UITheme.CreateButton(label,
-                _activeTab == id ? UITheme.Orange : UITheme.Border,
-                _activeTab == id ? UITheme.TextLight : UITheme.TextPrimary);
-            btn.CustomMinimumSize = new Vector2(140, 44);
-            var capturedId = id;
-            btn.Pressed += () => { _activeTab = capturedId; BuildUI(); };
+            bool active = _activeTab == id;
+            var btn = UITheme.CreateFlatButton(label,
+                active ? color : UITheme.Border,
+                active ? UITheme.TextLight : UITheme.TextPrimary);
+            btn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            string captured = id;
+            btn.Pressed += () => { _activeTab = captured; BuildUI(); };
             tabs.AddChild(btn);
         }
 
-        // Content area
-        var scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        // ─── Content area ─────────────────────────────────────────
+        var scroll = new ScrollContainer
+        {
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
         root.AddChild(scroll);
 
-        var content = new VBoxContainer();
+        var content = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
         content.AddThemeConstantOverride("separation", 8);
         scroll.AddChild(content);
 
@@ -83,21 +105,25 @@ public partial class TransferWindowScreen : Control
             case "scout": BuildScoutTab(content); break;
         }
 
-        // Bottom buttons
-        var bottomHbox = new HBoxContainer();
-        bottomHbox.AddThemeConstantOverride("separation", UITheme.Padding);
-        root.AddChild(bottomHbox);
+        // ─── Bottom actions ───────────────────────────────────────
+        var bottomRow = new HBoxContainer();
+        bottomRow.AddThemeConstantOverride("separation", UITheme.Padding);
+        root.AddChild(bottomRow);
 
-        var doneBtn = UITheme.CreateButton("✅ Done — Advance Day", UITheme.Green);
+        var doneBtn = UITheme.CreateButton("Done — Advance Day", UITheme.Green);
         doneBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         doneBtn.Pressed += OnDone;
-        bottomHbox.AddChild(doneBtn);
+        bottomRow.AddChild(doneBtn);
 
-        var squadBtn = UITheme.CreateButton("📋 Squad", UITheme.BlueDark);
+        var squadBtn = UITheme.CreateButton("Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
-        bottomHbox.AddChild(squadBtn);
+        bottomRow.AddChild(squadBtn);
+
+        Anim.StaggerChildren(content, stagger: 0.03f, useScale: false);
     }
+
+    // ─── Buy tab ──────────────────────────────────────────────────────
 
     private void BuildBuyTab(VBoxContainer content)
     {
@@ -106,17 +132,18 @@ public partial class TransferWindowScreen : Control
 
         if (available.Count == 0)
         {
-            content.AddChild(UITheme.CreateLabel("No players available for transfer.",
-                UITheme.FontSizeBody, UITheme.TextSecondary));
+            content.AddChild(UITheme.CreateLabel("No players available.",
+                UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
             return;
         }
 
-        foreach (var (player, club, price) in available.Take(20))
+        foreach ((Player player, Club club, decimal price) in available.Take(20))
         {
-            var card = CreatePlayerTransferCard(player, club, "buy");
-            content.AddChild(card);
+            content.AddChild(CreateTransferCard(player, club, "buy"));
         }
     }
+
+    // ─── Sell tab ─────────────────────────────────────────────────────
 
     private void BuildSellTab(VBoxContainer content)
     {
@@ -124,105 +151,77 @@ public partial class TransferWindowScreen : Control
 
         if (sellable.Count == 0)
         {
-            content.AddChild(UITheme.CreateLabel("No players can be sold (squad at minimum).",
-                UITheme.FontSizeBody, UITheme.TextSecondary));
+            content.AddChild(UITheme.CreateLabel("No players can be sold (minimum squad).",
+                UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
             return;
         }
 
-        foreach (var (player, price) in sellable)
+        foreach ((Player player, decimal price) in sellable)
         {
-            var card = CreatePlayerTransferCard(player, _playerClub, "sell");
-            content.AddChild(card);
+            content.AddChild(CreateTransferCard(player, _playerClub, "sell"));
         }
     }
 
+    // ─── Youth tab ────────────────────────────────────────────────────
+
     private void BuildYouthTab(VBoxContainer content)
     {
-        content.AddChild(UITheme.CreateLabel("🌱 Youth Academy",
-            UITheme.FontSizeHeading, UITheme.Green));
+        content.AddChild(UITheme.CreateLabel("Youth Academy",
+            UITheme.FontSizeHeading, UITheme.Blue));
         content.AddChild(UITheme.CreateLabel(
             "Generate 3 youth prospects. Pick one to join your squad.",
             UITheme.FontSizeSmall, UITheme.TextSecondary));
 
-        var generateBtn = UITheme.CreateButton("🎴 Generate Prospects", UITheme.Green);
+        var generateBtn = UITheme.CreateButton("Generate Prospects", UITheme.Green);
+        generateBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         generateBtn.Pressed += () =>
         {
             int nextId = _gameState.GetNextPlayerId(3);
             var rng = new Simulation.SeededRng(nextId);
             var prospects = YouthAcademy.GenerateProspects(rng, _playerClub.Country, nextId);
 
-            // Show prospect cards
-            foreach (var child in content.GetChildren())
+            foreach (Node child in content.GetChildren())
                 child.QueueFree();
 
             content.AddChild(UITheme.CreateLabel("Choose a prospect:",
-                UITheme.FontSizeHeading, UITheme.Green));
+                UITheme.FontSizeHeading, UITheme.Blue));
 
             foreach (var p in prospects)
             {
-                var card = UITheme.CreateCard();
-                card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                var card = CreateProspectCard(p);
                 content.AddChild(card);
-
-                var vbox = new VBoxContainer();
-                vbox.AddThemeConstantOverride("separation", 4);
-                card.AddChild(vbox);
-
-                float ovr = p.Prospect.PrimaryPosition == PlayerPosition.GK
-                    ? p.Prospect.Attributes.GoalkeeperOverall
-                    : p.Prospect.Attributes.OutfieldOverall;
-
-                vbox.AddChild(UITheme.CreateLabel(
-                    $"{p.Prospect.Name} — {p.Prospect.PrimaryPosition} — Age {p.Prospect.Age}",
-                    UITheme.FontSizeBody, UITheme.TextPrimary));
-                vbox.AddChild(UITheme.CreateLabel(
-                    $"Overall: {ovr:F0}  |  Fee: {p.Fee:C0}",
-                    UITheme.FontSizeSmall, UITheme.TextSecondary));
-
-                var recruitBtn = UITheme.CreateButton("Recruit", UITheme.Green);
-                recruitBtn.CustomMinimumSize = new Vector2(120, 36);
-                var capturedP = p;
-                recruitBtn.Pressed += () =>
-                {
-                    if (_playerClub.Balance >= capturedP.Fee)
-                    {
-                        TransferMarket.AddFreeAgent(_playerClub, capturedP.Prospect, capturedP.Fee);
-                        _gameState.RecordTransfer(new TransferRecord
-                        {
-                            Type = TransferType.YouthRecruit,
-                            PlayerId = capturedP.Prospect.Id,
-                            PlayerName = capturedP.Prospect.Name,
-                            ToClubId = _playerClub.Id,
-                            Fee = capturedP.Fee,
-                            Day = _gameState.CurrentDay.Day
-                        });
-                        BuildUI();
-                    }
-                };
-                vbox.AddChild(recruitBtn);
             }
         };
         content.AddChild(generateBtn);
     }
 
+    // ─── Scout tab ────────────────────────────────────────────────────
+
     private void BuildScoutTab(VBoxContainer content)
     {
-        content.AddChild(UITheme.CreateLabel("🔭 Scouting Regions",
-            UITheme.FontSizeHeading, UITheme.Blue));
+        content.AddChild(UITheme.CreateLabel("Scouting Regions",
+            UITheme.FontSizeHeading, UITheme.Purple));
 
         var regions = ScoutingSystem.GetRegions();
         foreach (var region in regions)
         {
+            var card = HoverCard.Create(UITheme.Purple);
+            card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            card.DisableTilt = true;
+            content.AddChild(card);
+
             var hbox = new HBoxContainer();
-            hbox.AddThemeConstantOverride("separation", 8);
-            content.AddChild(hbox);
+            hbox.AddThemeConstantOverride("separation", UITheme.Padding);
+            card.AddChild(hbox);
 
-            hbox.AddChild(UITheme.CreateLabel(
-                $"{region.Name} — Cost: {region.Cost:C0}",
-                UITheme.FontSizeBody, UITheme.TextPrimary));
+            var info = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            info.AddChild(UITheme.CreateLabel(region.Name,
+                UITheme.FontSizeBody, UITheme.TextDark));
+            info.AddChild(UITheme.CreateLabel($"Cost: {FormatMoney(region.Cost)}",
+                UITheme.FontSizeSmall, UITheme.TextSecondary));
+            hbox.AddChild(info);
 
-            var scoutBtn = UITheme.CreateButton("Scout", UITheme.Blue);
-            scoutBtn.CustomMinimumSize = new Vector2(100, 36);
+            var scoutBtn = UITheme.CreateFlatButton("Scout", UITheme.Purple);
             var capturedRegion = region;
             scoutBtn.Pressed += () =>
             {
@@ -233,49 +232,16 @@ public partial class TransferWindowScreen : Control
                     var rng = new Simulation.SeededRng(nextId);
                     var players = ScoutingSystem.Scout(rng, capturedRegion, nextId);
 
-                    // Show scouted players
-                    foreach (var child in content.GetChildren())
+                    foreach (Node child in content.GetChildren())
                         child.QueueFree();
 
                     content.AddChild(UITheme.CreateLabel(
                         $"Scouted {players.Count} free agents from {capturedRegion.Name}:",
-                        UITheme.FontSizeHeading, UITheme.Blue));
+                        UITheme.FontSizeHeading, UITheme.Purple));
 
-                    foreach (var p in players)
+                    foreach (Player p in players)
                     {
-                        var card = UITheme.CreateCard();
-                        content.AddChild(card);
-
-                        var vbox = new VBoxContainer();
-                        vbox.AddThemeConstantOverride("separation", 4);
-                        card.AddChild(vbox);
-
-                        float ovr = p.PrimaryPosition == PlayerPosition.GK
-                            ? p.Attributes.GoalkeeperOverall
-                            : p.Attributes.OutfieldOverall;
-
-                        vbox.AddChild(UITheme.CreateLabel(
-                            $"{p.Name} — {p.PrimaryPosition} — Age {p.Age} — OVR {ovr:F0}",
-                            UITheme.FontSizeBody, UITheme.TextPrimary));
-
-                        var signBtn = UITheme.CreateButton("Sign (Free)", UITheme.Green);
-                        signBtn.CustomMinimumSize = new Vector2(120, 36);
-                        var capturedPlayer = p;
-                        signBtn.Pressed += () =>
-                        {
-                            TransferMarket.AddFreeAgent(_playerClub, capturedPlayer, 0);
-                            _gameState.RecordTransfer(new TransferRecord
-                            {
-                                Type = TransferType.ScoutRecruit,
-                                PlayerId = capturedPlayer.Id,
-                                PlayerName = capturedPlayer.Name,
-                                ToClubId = _playerClub.Id,
-                                Fee = 0,
-                                Day = _gameState.CurrentDay.Day
-                            });
-                            BuildUI();
-                        };
-                        vbox.AddChild(signBtn);
+                        content.AddChild(CreateScoutedPlayerCard(p));
                     }
                 }
             };
@@ -283,9 +249,12 @@ public partial class TransferWindowScreen : Control
         }
     }
 
-    private PanelContainer CreatePlayerTransferCard(Player player, Club club, string action)
+    // ─── Card factories ───────────────────────────────────────────────
+
+    private HoverCard CreateTransferCard(Player player, Club club, string action)
     {
-        var card = UITheme.CreateCard();
+        var card = HoverCard.Create();
+        card.DisableTilt = true;
         card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
         var hbox = new HBoxContainer();
@@ -297,20 +266,28 @@ public partial class TransferWindowScreen : Control
             : player.Attributes.OutfieldOverall;
         decimal value = PlayerValuation.Calculate(player, club.Reputation);
 
-        var infoVbox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"{player.Name}", UITheme.FontSizeBody, UITheme.TextPrimary));
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"{player.PrimaryPosition} | Age {player.Age} | OVR {ovr:F0} | {club.Name}",
-            UITheme.FontSizeSmall, UITheme.TextSecondary));
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"Value: {value:C0}", UITheme.FontSizeSmall, UITheme.Green));
-        hbox.AddChild(infoVbox);
+        // OVR badge
+        hbox.AddChild(UITheme.CreateBadge($"{ovr:F0}",
+            UITheme.StatColor((int)ovr), UITheme.TextLight,
+            UITheme.FontSizeBody, new Vector2(44, 40)));
 
+        // Info
+        var info = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        info.AddThemeConstantOverride("separation", 2);
+        info.AddChild(UITheme.CreateLabel(player.Name, UITheme.FontSizeBody, UITheme.TextDark));
+        info.AddChild(UITheme.CreateLabel(
+            $"{player.PrimaryPosition} • Age {player.Age} • {club.Name}",
+            UITheme.FontSizeCaption, UITheme.TextSecondary));
+        hbox.AddChild(info);
+
+        // Value
+        hbox.AddChild(UITheme.CreateLabel(FormatMoney(value),
+            UITheme.FontSizeBody, UITheme.Green));
+
+        // Action button
         if (action == "buy")
         {
-            var buyBtn = UITheme.CreateButton($"Buy {value:C0}", UITheme.Green);
-            buyBtn.CustomMinimumSize = new Vector2(140, 40);
+            var buyBtn = UITheme.CreateFlatButton("Buy", UITheme.Green);
             buyBtn.Pressed += () =>
             {
                 if (TransferMarket.ExecuteBuy(_playerClub, club, player, value))
@@ -323,21 +300,19 @@ public partial class TransferWindowScreen : Control
                         FromClubId = club.Id,
                         ToClubId = _playerClub.Id,
                         Fee = value,
-                        Day = _gameState.CurrentDay.Day
+                        Day = _gameState.CurrentDay.Day,
                     });
                     BuildUI();
                 }
             };
             hbox.AddChild(buyBtn);
         }
-        else if (action == "sell")
+        else
         {
-            var sellBtn = UITheme.CreateButton($"Sell {value:C0}", UITheme.Pink);
-            sellBtn.CustomMinimumSize = new Vector2(140, 40);
+            var sellBtn = UITheme.CreateFlatButton("Sell", UITheme.Red);
             sellBtn.Pressed += () =>
             {
-                // Find a buyer (first AI club that can afford)
-                var buyer = _gameState.Clubs.FirstOrDefault(c =>
+                Club? buyer = _gameState.Clubs.FirstOrDefault(c =>
                     c.Id != _playerClub.Id && c.Balance >= value &&
                     c.Team.Players.Count < TransferMarket.MaxSquadSize);
 
@@ -351,7 +326,7 @@ public partial class TransferWindowScreen : Control
                         FromClubId = _playerClub.Id,
                         ToClubId = buyer.Id,
                         Fee = value,
-                        Day = _gameState.CurrentDay.Day
+                        Day = _gameState.CurrentDay.Day,
                     });
                     BuildUI();
                 }
@@ -362,9 +337,105 @@ public partial class TransferWindowScreen : Control
         return card;
     }
 
+    private HoverCard CreateProspectCard((Player Prospect, decimal Fee) prospect)
+    {
+        var card = HoverCard.Create(UITheme.Blue);
+        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        card.DisableTilt = true;
+
+        var hbox = new HBoxContainer();
+        hbox.AddThemeConstantOverride("separation", UITheme.Padding);
+        card.AddChild(hbox);
+
+        float ovr = prospect.Prospect.PrimaryPosition == PlayerPosition.GK
+            ? prospect.Prospect.Attributes.GoalkeeperOverall
+            : prospect.Prospect.Attributes.OutfieldOverall;
+
+        hbox.AddChild(UITheme.CreateBadge($"{ovr:F0}",
+            UITheme.StatColor((int)ovr), UITheme.TextLight,
+            UITheme.FontSizeBody, new Vector2(44, 40)));
+
+        var info = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        info.AddChild(UITheme.CreateLabel(
+            $"{prospect.Prospect.Name}", UITheme.FontSizeBody, UITheme.TextDark));
+        info.AddChild(UITheme.CreateLabel(
+            $"{prospect.Prospect.PrimaryPosition} • Age {prospect.Prospect.Age} • Fee: {FormatMoney(prospect.Fee)}",
+            UITheme.FontSizeCaption, UITheme.TextSecondary));
+        hbox.AddChild(info);
+
+        var recruitBtn = UITheme.CreateFlatButton("Recruit", UITheme.Green);
+        recruitBtn.Pressed += () =>
+        {
+            if (_playerClub.Balance >= prospect.Fee)
+            {
+                TransferMarket.AddFreeAgent(_playerClub, prospect.Prospect, prospect.Fee);
+                _gameState.RecordTransfer(new TransferRecord
+                {
+                    Type = TransferType.YouthRecruit,
+                    PlayerId = prospect.Prospect.Id,
+                    PlayerName = prospect.Prospect.Name,
+                    ToClubId = _playerClub.Id,
+                    Fee = prospect.Fee,
+                    Day = _gameState.CurrentDay.Day,
+                });
+                BuildUI();
+            }
+        };
+        hbox.AddChild(recruitBtn);
+
+        return card;
+    }
+
+    private HoverCard CreateScoutedPlayerCard(Player player)
+    {
+        var card = HoverCard.Create(UITheme.Purple);
+        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        card.DisableTilt = true;
+
+        var hbox = new HBoxContainer();
+        hbox.AddThemeConstantOverride("separation", UITheme.Padding);
+        card.AddChild(hbox);
+
+        float ovr = player.PrimaryPosition == PlayerPosition.GK
+            ? player.Attributes.GoalkeeperOverall
+            : player.Attributes.OutfieldOverall;
+
+        hbox.AddChild(UITheme.CreateBadge($"{ovr:F0}",
+            UITheme.StatColor((int)ovr), UITheme.TextLight,
+            UITheme.FontSizeBody, new Vector2(44, 40)));
+
+        var info = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        info.AddChild(UITheme.CreateLabel(player.Name,
+            UITheme.FontSizeBody, UITheme.TextDark));
+        info.AddChild(UITheme.CreateLabel(
+            $"{player.PrimaryPosition} • Age {player.Age} • OVR {ovr:F0}",
+            UITheme.FontSizeCaption, UITheme.TextSecondary));
+        hbox.AddChild(info);
+
+        var signBtn = UITheme.CreateFlatButton("Sign (Free)", UITheme.Green);
+        signBtn.Pressed += () =>
+        {
+            TransferMarket.AddFreeAgent(_playerClub, player, 0);
+            _gameState.RecordTransfer(new TransferRecord
+            {
+                Type = TransferType.ScoutRecruit,
+                PlayerId = player.Id,
+                PlayerName = player.Name,
+                ToClubId = _playerClub.Id,
+                Fee = 0,
+                Day = _gameState.CurrentDay.Day,
+            });
+            BuildUI();
+        };
+        hbox.AddChild(signBtn);
+
+        return card;
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────
+
     private void OnDone()
     {
-        // Advance the transfer day
         _gameState.AdvanceDay();
 
         try
@@ -375,5 +446,15 @@ public partial class TransferWindowScreen : Control
         catch { /* silent */ }
 
         SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
+    }
+
+    private static string FormatMoney(decimal amount)
+    {
+        return amount switch
+        {
+            >= 1_000_000 => $"{amount / 1_000_000:F1}M",
+            >= 1_000 => $"{amount / 1_000:F0}K",
+            _ => $"{amount:F0}",
+        };
     }
 }

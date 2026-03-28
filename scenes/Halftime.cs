@@ -8,7 +8,7 @@ using ElevenLegends.UI;
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Halftime screen — locker room card selection and substitutions.
+/// Halftime screen — locker room card selection with HoverCard effects.
 /// </summary>
 public partial class HalftimeScreen : Control
 {
@@ -40,10 +40,11 @@ public partial class HalftimeScreen : Control
 
     private void BuildUI()
     {
-        foreach (var child in GetChildren())
+        foreach (Node child in GetChildren())
             child.QueueFree();
 
-        var bg = UITheme.CreateBackground(UITheme.Background);
+        var bg = UITheme.CreateGradientBackground(
+            UITheme.BlueDark, new Color("0F1B2D"));
         AddChild(bg);
 
         var root = new VBoxContainer
@@ -51,22 +52,26 @@ public partial class HalftimeScreen : Control
             AnchorsPreset = (int)LayoutPreset.FullRect,
             OffsetLeft = UITheme.PaddingLarge,
             OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.Padding,
-            OffsetBottom = -UITheme.Padding,
+            OffsetTop = UITheme.PaddingLarge,
+            OffsetBottom = -UITheme.PaddingLarge,
         };
-        root.AddThemeConstantOverride("separation", UITheme.Padding);
+        root.AddThemeConstantOverride("separation", UITheme.PaddingLarge);
         AddChild(root);
 
-        // Score
-        var score = UITheme.CreateLabel(
-            $"⏱️ Half Time: {_config.HomeTeam.Name} {_matchState.ScoreHome} - {_matchState.ScoreAway} {_config.AwayTeam.Name}",
-            UITheme.FontSizeHeading, UITheme.TextPrimary, HorizontalAlignment.Center);
-        root.AddChild(score);
+        // ─── Score header ─────────────────────────────────────────
+        root.AddChild(UITheme.CreateLabel(
+            $"Half Time",
+            UITheme.FontSizeHeading, UITheme.TextLight, HorizontalAlignment.Center));
 
-        // Locker room cards section
-        root.AddChild(UITheme.CreateLabel("🎴 Choose a Locker Room Card",
-            UITheme.FontSizeHeading, UITheme.Blue, HorizontalAlignment.Center));
+        root.AddChild(UITheme.CreateLabel(
+            $"{_config.HomeTeam.Name}  {_matchState.ScoreHome} - {_matchState.ScoreAway}  {_config.AwayTeam.Name}",
+            UITheme.FontSizeTitle, UITheme.TextLight, HorizontalAlignment.Center));
 
+        // ─── Card selection prompt ────────────────────────────────
+        root.AddChild(UITheme.CreateLabel("Choose a Locker Room Card",
+            UITheme.FontSizeBody, new Color(1, 1, 1, 0.7f), HorizontalAlignment.Center));
+
+        // ─── Generate cards ───────────────────────────────────────
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
         int scoreDiff = isHome
             ? _matchState.ScoreHome - _matchState.ScoreAway
@@ -83,32 +88,77 @@ public partial class HalftimeScreen : Control
 
         var cards = LockerRoomCardGenerator.Generate(
             new SeededRng(_config.Seed + 100), scoreDiff, avgStamina, avgMorale);
-        var cardsHbox = new HBoxContainer();
-        cardsHbox.AddThemeConstantOverride("separation", UITheme.Padding);
-        root.AddChild(cardsHbox);
 
-        foreach (var card in cards)
+        // ─── Card row ─────────────────────────────────────────────
+        var cardRow = new HBoxContainer();
+        cardRow.AddThemeConstantOverride("separation", UITheme.PaddingLarge);
+        root.AddChild(cardRow);
+
+        cardRow.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+
+        foreach (LockerRoomCard card in cards)
         {
-            var cardPanel = CreateCardUI(card);
-            cardsHbox.AddChild(cardPanel);
+            HoverCard cardUI = CreateCardUI(card);
+            cardRow.AddChild(cardUI);
         }
 
-        // Continue button
-        var continueBtn = UITheme.CreateButton("▶️ Start Second Half", UITheme.Green);
+        cardRow.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+
+        // ─── Continue button ──────────────────────────────────────
+        root.AddChild(new Control { SizeFlagsVertical = SizeFlags.ExpandFill });
+
+        var continueBtn = UITheme.CreateButton("Start Second Half", UITheme.Green);
         continueBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        continueBtn.CustomMinimumSize = new Vector2(280, 56);
         continueBtn.Pressed += OnContinue;
         root.AddChild(continueBtn);
+
+        // ─── Entrance animations ──────────────────────────────────
+        Anim.StaggerChildren(cardRow, stagger: 0.15f, duration: 0.5f);
     }
 
-    private PanelContainer CreateCardUI(LockerRoomCard card)
+    private HoverCard CreateCardUI(LockerRoomCard card)
     {
-        var panel = UITheme.CreateCard();
-        panel.CustomMinimumSize = new Vector2(220, 160);
-        panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        bool isSelected = _selectedCard?.Name == card.Name;
+
+        Color cardColor = card.Effect switch
+        {
+            CardEffect.MoraleBoost => UITheme.Green,
+            CardEffect.StaminaRecovery => UITheme.Blue,
+            CardEffect.TeamBuff => UITheme.Orange,
+            CardEffect.OpponentDebuff => UITheme.Purple,
+            _ => UITheme.Yellow,
+        };
+
+        var hoverCard = HoverCard.Create(isSelected ? UITheme.Yellow : cardColor);
+        hoverCard.CustomMinimumSize = new Vector2(200, 220);
+
+        if (isSelected)
+        {
+            // Brighter bg for selected
+            var style = new StyleBoxFlat
+            {
+                BgColor = cardColor.Lerp(UITheme.White, 0.85f),
+                CornerRadiusTopLeft = UITheme.CardCornerRadius,
+                CornerRadiusTopRight = UITheme.CardCornerRadius,
+                CornerRadiusBottomLeft = UITheme.CardCornerRadius,
+                CornerRadiusBottomRight = UITheme.CardCornerRadius,
+                ContentMarginLeft = UITheme.Padding,
+                ContentMarginRight = UITheme.Padding,
+                ContentMarginTop = UITheme.Padding,
+                ContentMarginBottom = UITheme.Padding,
+                ShadowColor = new Color(cardColor, 0.4f),
+                ShadowSize = 16,
+                ShadowOffset = new Vector2(0, 4),
+                BorderWidthTop = 4,
+                BorderColor = UITheme.Yellow,
+            };
+            hoverCard.AddThemeStyleboxOverride("panel", style);
+        }
 
         var vbox = new VBoxContainer();
-        vbox.AddThemeConstantOverride("separation", 8);
-        panel.AddChild(vbox);
+        vbox.AddThemeConstantOverride("separation", 10);
+        hoverCard.AddChild(vbox);
 
         string emoji = card.Effect switch
         {
@@ -116,47 +166,57 @@ public partial class HalftimeScreen : Control
             CardEffect.StaminaRecovery => "⚡",
             CardEffect.TeamBuff => "🔥",
             CardEffect.OpponentDebuff => "❄️",
-            _ => "🎴"
+            _ => "🎴",
         };
 
-        vbox.AddChild(UITheme.CreateLabel($"{emoji} {card.Name}",
-            UITheme.FontSizeBody, UITheme.TextPrimary, HorizontalAlignment.Center));
+        // Emoji icon
+        vbox.AddChild(UITheme.CreateLabel(emoji, UITheme.FontSizeDisplay,
+            cardColor, HorizontalAlignment.Center));
+
+        // Card name
+        vbox.AddChild(UITheme.CreateLabel(card.Name,
+            UITheme.FontSizeBody, UITheme.TextDark, HorizontalAlignment.Center));
+
+        // Description
         vbox.AddChild(UITheme.CreateLabel(card.Description,
             UITheme.FontSizeSmall, UITheme.TextSecondary, HorizontalAlignment.Center));
-        vbox.AddChild(UITheme.CreateLabel($"+{card.Magnitude}",
-            UITheme.FontSizeHeading, UITheme.Green, HorizontalAlignment.Center));
 
-        var selectBtn = UITheme.CreateButton("Select",
-            _selectedCard?.Name == card.Name ? UITheme.Green : UITheme.Blue);
-        selectBtn.CustomMinimumSize = new Vector2(0, 40);
-        var capturedCard = card;
-        selectBtn.Pressed += () =>
+        // Magnitude badge
+        var magBadge = UITheme.CreateBadge($"+{card.Magnitude}",
+            cardColor, UITheme.TextLight, UITheme.FontSizeHeading, new Vector2(60, 40));
+        magBadge.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        vbox.AddChild(magBadge);
+
+        // Click to select
+        var btn = new Button
         {
-            _selectedCard = capturedCard;
-            // Rebuild to show selection
-            foreach (var child in GetChildren())
-                child.QueueFree();
+            Flat = true,
+            AnchorsPreset = (int)LayoutPreset.FullRect,
+            Modulate = new Color(1, 1, 1, 0),
+        };
+        LockerRoomCard captured = card;
+        btn.Pressed += () =>
+        {
+            _selectedCard = captured;
             BuildUI();
         };
-        vbox.AddChild(selectBtn);
+        hoverCard.AddChild(btn);
 
-        return panel;
+        return hoverCard;
     }
 
     private void OnContinue()
     {
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
 
-        // Apply card and simulate second half
         if (_selectedCard != null)
         {
             HalftimeProcessor.ApplyCard(_matchState, _config, _selectedCard, isHome);
         }
 
-        var result = MatchSimulator.SimulateSecondHalf(_matchState, _config,
+        MatchResult result = MatchSimulator.SimulateSecondHalf(_matchState, _config,
             new SeededRng(_config.Seed + 200));
 
-        // Go to post-match
         PostMatchScreen.PendingResult = result;
         PostMatchScreen.PendingContext = _ctx;
         SceneManager.Instance.ChangeScene("res://scenes/PostMatch.tscn");

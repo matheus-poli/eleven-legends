@@ -8,6 +8,7 @@ namespace ElevenLegends.Scenes;
 
 /// <summary>
 /// Pre-match screen — formation, tactics, opponent info.
+/// Duolingo-style with accent cards and 3D buttons.
 /// </summary>
 public partial class PreMatch : Control
 {
@@ -28,6 +29,9 @@ public partial class PreMatch : Control
 
     private void BuildUI()
     {
+        foreach (Node child in GetChildren())
+            child.QueueFree();
+
         var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
@@ -44,125 +48,131 @@ public partial class PreMatch : Control
 
         if (_ctx.PlayerFixture == null)
         {
-            // Player eliminated — skip match
-            var eliminated = UITheme.CreateLabel(
-                "Your club was eliminated. No match today.",
-                UITheme.FontSizeHeading, UITheme.TextSecondary, HorizontalAlignment.Center);
-            root.AddChild(eliminated);
-
-            var skipBtn = UITheme.CreateButton("Continue", UITheme.Blue);
-            skipBtn.Pressed += () =>
-            {
-                _gameState.FinishDay(_ctx, null);
-                SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
-            };
-            root.AddChild(skipBtn);
+            BuildEliminatedView(root);
             return;
         }
 
         bool isHome = _ctx.PlayerFixture.HomeClubId == _playerClub.Id;
-        var opponentId = isHome ? _ctx.PlayerFixture.AwayClubId : _ctx.PlayerFixture.HomeClubId;
-        var opponent = _gameState.Clubs.First(c => c.Id == opponentId);
+        int opponentId = isHome ? _ctx.PlayerFixture.AwayClubId : _ctx.PlayerFixture.HomeClubId;
+        Club opponent = _gameState.Clubs.First(c => c.Id == opponentId);
 
-        // Match header
-        var header = UITheme.CreateLabel(
-            $"⚽ {_playerClub.Name}  vs  {opponent.Name}",
-            UITheme.FontSizeTitle, UITheme.TextPrimary, HorizontalAlignment.Center);
-        root.AddChild(header);
+        // ─── Match header card ────────────────────────────────────
+        var headerCard = UITheme.CreateCard(UITheme.Green);
+        root.AddChild(headerCard);
 
-        var venue = UITheme.CreateLabel(
-            isHome ? "🏟️ Home" : "✈️ Away",
-            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
-        root.AddChild(venue);
+        var headerVbox = new VBoxContainer();
+        headerVbox.AddThemeConstantOverride("separation", 4);
+        headerCard.AddChild(headerVbox);
 
-        // Tactics section
-        var tacticsCard = UITheme.CreateCard();
+        headerVbox.AddChild(UITheme.CreateLabel(
+            $"{_playerClub.Name}  vs  {opponent.Name}",
+            UITheme.FontSizeTitle, UITheme.TextDark, HorizontalAlignment.Center));
+
+        headerVbox.AddChild(UITheme.CreateLabel(
+            isHome ? "🏟️  Home" : "✈️  Away",
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
+
+        // ─── Tactics card ─────────────────────────────────────────
+        var tacticsCard = UITheme.CreateCard(UITheme.Blue);
         root.AddChild(tacticsCard);
 
         var tacticsVbox = new VBoxContainer();
         tacticsVbox.AddThemeConstantOverride("separation", 12);
         tacticsCard.AddChild(tacticsVbox);
 
-        tacticsVbox.AddChild(UITheme.CreateLabel("🧠 Tactics", UITheme.FontSizeHeading, UITheme.Blue));
+        tacticsVbox.AddChild(UITheme.CreateLabel("Tactics",
+            UITheme.FontSizeHeading, UITheme.Blue));
 
-        // Formation buttons
-        var formLabel = UITheme.CreateLabel("Formation:", UITheme.FontSizeBody, UITheme.TextSecondary);
-        tacticsVbox.AddChild(formLabel);
+        // Formation selector
+        tacticsVbox.AddChild(UITheme.CreateLabel("Formation",
+            UITheme.FontSizeSmall, UITheme.TextSecondary));
 
-        var formHbox = new HBoxContainer();
-        formHbox.AddThemeConstantOverride("separation", 8);
-        tacticsVbox.AddChild(formHbox);
+        var formRow = new HBoxContainer();
+        formRow.AddThemeConstantOverride("separation", 8);
+        tacticsVbox.AddChild(formRow);
 
-        var formations = new[] { Formation.F442, Formation.F433, Formation.F352, Formation.F4231, Formation.F532 };
-        foreach (var f in formations)
+        Formation[] formations = [Formation.F442, Formation.F433, Formation.F352, Formation.F4231, Formation.F532];
+        foreach (Formation f in formations)
         {
-            bool isSelected = f.Name == _selectedFormation.Name;
-            var btn = UITheme.CreateButton(f.Name, isSelected ? UITheme.Green : UITheme.Border,
-                isSelected ? UITheme.TextLight : UITheme.TextPrimary);
-            btn.CustomMinimumSize = new Vector2(100, 44);
-            var capturedF = f;
-            btn.Pressed += () =>
-            {
-                _selectedFormation = capturedF;
-                BuildUI();
-            };
-            formHbox.AddChild(btn);
+            bool sel = f.Name == _selectedFormation.Name;
+            var btn = UITheme.CreateFlatButton(f.Name,
+                sel ? UITheme.Blue : UITheme.Border,
+                sel ? UITheme.TextLight : UITheme.TextPrimary);
+            btn.CustomMinimumSize = new Vector2(90, 40);
+            Formation captured = f;
+            btn.Pressed += () => { _selectedFormation = captured; BuildUI(); };
+            formRow.AddChild(btn);
         }
 
-        // Style buttons
-        var styleLabel = UITheme.CreateLabel("Style:", UITheme.FontSizeBody, UITheme.TextSecondary);
-        tacticsVbox.AddChild(styleLabel);
+        // Style selector
+        tacticsVbox.AddChild(UITheme.CreateLabel("Playing Style",
+            UITheme.FontSizeSmall, UITheme.TextSecondary));
 
-        var styleHbox = new HBoxContainer();
-        styleHbox.AddThemeConstantOverride("separation", 8);
-        tacticsVbox.AddChild(styleHbox);
+        var styleRow = new HBoxContainer();
+        styleRow.AddThemeConstantOverride("separation", 8);
+        tacticsVbox.AddChild(styleRow);
 
         foreach (TacticalStyle style in System.Enum.GetValues<TacticalStyle>())
         {
-            bool isSelected = style == _selectedStyle;
-            string emoji = style switch
+            bool sel = style == _selectedStyle;
+            (string emoji, Color color) = style switch
             {
-                TacticalStyle.Attacking => "⚔️",
-                TacticalStyle.Defensive => "🛡️",
-                _ => "⚖️"
+                TacticalStyle.Attacking => ("⚔️", UITheme.Red),
+                TacticalStyle.Defensive => ("🛡️", UITheme.Blue),
+                _ => ("⚖️", UITheme.Green),
             };
-            var btn = UITheme.CreateButton($"{emoji} {style}", isSelected ? UITheme.Blue : UITheme.Border,
-                isSelected ? UITheme.TextLight : UITheme.TextPrimary);
-            btn.CustomMinimumSize = new Vector2(140, 44);
-            var capturedStyle = style;
-            btn.Pressed += () =>
-            {
-                _selectedStyle = capturedStyle;
-                BuildUI();
-            };
-            styleHbox.AddChild(btn);
+
+            var btn = UITheme.CreateFlatButton($"{emoji} {style}",
+                sel ? color : UITheme.Border,
+                sel ? UITheme.TextLight : UITheme.TextPrimary);
+            btn.CustomMinimumSize = new Vector2(130, 40);
+            TacticalStyle captured = style;
+            btn.Pressed += () => { _selectedStyle = captured; BuildUI(); };
+            styleRow.AddChild(btn);
         }
 
-        // Start match button
-        var startBtn = UITheme.CreateButton("🏟️  Start Match!", UITheme.Green);
+        // ─── Start match button ───────────────────────────────────
+        var startBtn = UITheme.CreateButton("Start Match!", UITheme.Green);
         startBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         startBtn.CustomMinimumSize = new Vector2(300, 64);
         startBtn.Pressed += OnStartMatch;
         root.AddChild(startBtn);
+
+        // ─── Entrance animations ──────────────────────────────────
+        Anim.StaggerChildren(root, stagger: 0.06f, useScale: false);
+    }
+
+    private void BuildEliminatedView(VBoxContainer root)
+    {
+        root.AddChild(new Control { SizeFlagsVertical = SizeFlags.ExpandFill });
+        root.AddChild(UITheme.CreateLabel(
+            "Your club was eliminated. No match today.",
+            UITheme.FontSizeHeading, UITheme.TextSecondary, HorizontalAlignment.Center));
+
+        var skipBtn = UITheme.CreateButton("Continue", UITheme.Blue);
+        skipBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        skipBtn.Pressed += () =>
+        {
+            _gameState.FinishDay(_ctx, null);
+            SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
+        };
+        root.AddChild(skipBtn);
+        root.AddChild(new Control { SizeFlagsVertical = SizeFlags.ExpandFill });
     }
 
     private void OnStartMatch()
     {
-        // Build tactical setup
         var lineup = _playerClub.Team.StartingLineup.ToList();
         var tactics = new TacticalSetup
         {
             Formation = _selectedFormation,
             Style = _selectedStyle,
-            StartingPlayerIds = lineup
+            StartingPlayerIds = lineup,
         };
 
-        var config = _gameState.BuildPlayerMatchConfig(_ctx, tactics);
+        MatchConfig config = _gameState.BuildPlayerMatchConfig(_ctx, tactics);
+        (MatchState state, _) = MatchSimulator.SimulateFirstHalf(config);
 
-        // Simulate first half
-        var (state, _) = MatchSimulator.SimulateFirstHalf(config);
-
-        // Pass data through static fields (Godot scene change limitation)
         MatchSimScreen.PendingMatchState = state;
         MatchSimScreen.PendingConfig = config;
         MatchSimScreen.PendingContext = _ctx;

@@ -7,11 +7,10 @@ using ElevenLegends.UI;
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Match simulation screen — shows match events tick by tick.
+/// Match simulation screen — live event feed with score, possession, and animated events.
 /// </summary>
 public partial class MatchSimScreen : Control
 {
-    // Static state passed from PreMatch (workaround for scene transitions)
     public static MatchState? PendingMatchState;
     public static MatchConfig? PendingConfig;
     public static MatchDayContext? PendingContext;
@@ -27,9 +26,6 @@ public partial class MatchSimScreen : Control
     private Label _tickLabel = null!;
     private ProgressBar _possessionBar = null!;
 
-    private bool _isHalftime;
-    private MatchResult? _finalResult;
-
     public override void _Ready()
     {
         _matchState = PendingMatchState!;
@@ -43,8 +39,6 @@ public partial class MatchSimScreen : Control
         PendingContext = null;
 
         BuildUI();
-
-        // Show first half events
         ShowFirstHalfEvents();
     }
 
@@ -64,76 +58,88 @@ public partial class MatchSimScreen : Control
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
-        bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
-        var opponentId = isHome ? _ctx.PlayerFixture.AwayClubId : _ctx.PlayerFixture.HomeClubId;
-        var opponent = _gameState.Clubs.First(c => c.Id == opponentId);
-
-        // Score display
-        var scoreCard = UITheme.CreateCard();
+        // ─── Score card ───────────────────────────────────────────
+        var scoreCard = UITheme.CreateCard(UITheme.Green);
         root.AddChild(scoreCard);
 
         var scoreVbox = new VBoxContainer();
-        scoreVbox.AddThemeConstantOverride("separation", 4);
+        scoreVbox.AddThemeConstantOverride("separation", 6);
         scoreCard.AddChild(scoreVbox);
 
         _scoreLabel = UITheme.CreateLabel(
             $"{_config.HomeTeam.Name}  {_matchState.ScoreHome} - {_matchState.ScoreAway}  {_config.AwayTeam.Name}",
-            UITheme.FontSizeTitle, UITheme.TextPrimary, HorizontalAlignment.Center);
+            UITheme.FontSizeTitle, UITheme.TextDark, HorizontalAlignment.Center);
         scoreVbox.AddChild(_scoreLabel);
 
-        _tickLabel = UITheme.CreateLabel("", UITheme.FontSizeBody,
-            UITheme.TextSecondary, HorizontalAlignment.Center);
+        _tickLabel = UITheme.CreateLabel("",
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center);
         scoreVbox.AddChild(_tickLabel);
 
         // Possession bar
-        var possLabel = UITheme.CreateLabel("Possession", UITheme.FontSizeSmall,
-            UITheme.TextSecondary, HorizontalAlignment.Center);
-        scoreVbox.AddChild(possLabel);
+        scoreVbox.AddChild(UITheme.CreateLabel("Possession",
+            UITheme.FontSizeCaption, UITheme.TextSecondary, HorizontalAlignment.Center));
 
-        _possessionBar = new ProgressBar
-        {
-            MinValue = 0,
-            MaxValue = 100,
-            Value = _matchState.PossessionHome * 100,
-            CustomMinimumSize = new Vector2(0, 24),
-            ShowPercentage = true,
-        };
-        scoreVbox.AddChild(_possessionBar);
+        var possRow = new HBoxContainer();
+        possRow.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        scoreVbox.AddChild(possRow);
 
-        // Event feed (scrollable)
+        possRow.AddChild(UITheme.CreateLabel(
+            $"{_matchState.PossessionHome * 100:F0}%",
+            UITheme.FontSizeSmall, UITheme.Blue));
+
+        _possessionBar = UITheme.CreateProgressBar(
+            _matchState.PossessionHome * 100, 100, UITheme.Blue, UITheme.Red,
+            new Vector2(0, 16));
+        _possessionBar.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        possRow.AddChild(_possessionBar);
+
+        possRow.AddChild(UITheme.CreateLabel(
+            $"{(1 - _matchState.PossessionHome) * 100:F0}%",
+            UITheme.FontSizeSmall, UITheme.Red));
+
+        // ─── Event feed ───────────────────────────────────────────
         var scroll = new ScrollContainer
         {
             SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         root.AddChild(scroll);
 
         _eventFeed = new VBoxContainer();
         _eventFeed.AddThemeConstantOverride("separation", 4);
         scroll.AddChild(_eventFeed);
+
+        Anim.FadeIn(scoreCard, delay: 0.05f);
     }
 
     private void ShowFirstHalfEvents()
     {
-        _tickLabel!.Text = "⏱️ Half Time";
+        _tickLabel!.Text = "Half Time";
 
-        foreach (var evt in _matchState.Events)
+        foreach (MatchEvent evt in _matchState.Events)
         {
             AddEventToFeed(evt);
         }
-
         UpdateScore();
 
-        // Add halftime button
-        var root = GetChild<VBoxContainer>(1); // The VBoxContainer after bg
-        var halftimeBtn = UITheme.CreateButton("🎴 Halftime — Choose Card", UITheme.Yellow, UITheme.TextPrimary);
+        // Halftime button
+        var root = GetChild<VBoxContainer>(1);
+        var halftimeBtn = UITheme.CreateButton("Halftime — Choose Card", UITheme.Yellow, UITheme.TextDark);
         halftimeBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        halftimeBtn.CustomMinimumSize = new Vector2(280, 56);
         halftimeBtn.Pressed += OnHalftime;
         root.AddChild(halftimeBtn);
+
+        // Animate the button entrance
+        GetTree().CreateTimer(0.3f).Timeout += () =>
+        {
+            if (IsInstanceValid(halftimeBtn))
+                Anim.PulseOnce(halftimeBtn, 1.08f);
+        };
     }
 
     private void OnHalftime()
     {
-        // Go to halftime screen
         HalftimeScreen.PendingMatchState = _matchState;
         HalftimeScreen.PendingConfig = _config;
         HalftimeScreen.PendingContext = _ctx;
@@ -153,22 +159,39 @@ public partial class MatchSimScreen : Control
             EventType.RedCard => "🔴",
             EventType.Save => "🧤",
             EventType.Substitution => "🔄",
-            _ => "📋"
+            _ => "📋",
         };
 
-        Color color = evt.Type switch
+        bool isGoal = evt.Type == EventType.Goal;
+
+        // Goal events get a card treatment
+        if (isGoal)
         {
-            EventType.Goal => UITheme.Green,
-            EventType.YellowCard => UITheme.Yellow,
-            EventType.RedCard => UITheme.Pink,
-            _ => UITheme.TextSecondary
-        };
+            var goalCard = UITheme.CreateCard(UITheme.Green);
+            goalCard.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _eventFeed.AddChild(goalCard);
 
-        var label = UITheme.CreateLabel(
-            $"  {evt.Tick}' {emoji} {evt.Description}",
-            evt.Type == EventType.Goal ? UITheme.FontSizeBody : UITheme.FontSizeSmall,
-            color);
-        _eventFeed.AddChild(label);
+            var goalLabel = UITheme.CreateLabel(
+                $"{evt.Tick}'  {emoji}  {evt.Description}",
+                UITheme.FontSizeBody, UITheme.Green, HorizontalAlignment.Center);
+            goalCard.AddChild(goalLabel);
+
+            Anim.PulseOnce(goalCard, 1.05f);
+        }
+        else
+        {
+            Color color = evt.Type switch
+            {
+                EventType.YellowCard => UITheme.Yellow,
+                EventType.RedCard => UITheme.Red,
+                _ => UITheme.TextSecondary,
+            };
+
+            var label = UITheme.CreateLabel(
+                $"  {evt.Tick}'  {emoji}  {evt.Description}",
+                UITheme.FontSizeSmall, color);
+            _eventFeed.AddChild(label);
+        }
     }
 
     private void UpdateScore()

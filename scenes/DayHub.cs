@@ -8,8 +8,8 @@ using ElevenLegends.UI;
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Day Hub — central screen of the game loop.
-/// Shows current day, club info, and navigation to match/transfers/squad.
+/// Day Hub — central game loop screen.
+/// Duolingo-style dashboard with progress bar, day card, calendar, and action buttons.
 /// </summary>
 public partial class DayHub : Control
 {
@@ -31,7 +31,7 @@ public partial class DayHub : Control
     private void BuildUI()
     {
         // Clear previous UI
-        foreach (var child in GetChildren())
+        foreach (Node child in GetChildren())
             child.QueueFree();
 
         var bg = UITheme.CreateBackground(UITheme.Background);
@@ -48,42 +48,63 @@ public partial class DayHub : Control
         _root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(_root);
 
-        // Top bar: Club name + money
         BuildTopBar();
-
-        // Day card
+        BuildSeasonProgress();
         BuildDayCard();
-
-        // Calendar preview
         BuildCalendarPreview();
-
-        // Action buttons
         BuildActionButtons();
+
+        // Entrance animation
+        Anim.StaggerChildren(_root, stagger: 0.06f, useScale: false);
     }
+
+    // ─── Top bar: club name + stats chips ─────────────────────────────
 
     private void BuildTopBar()
     {
+        var topCard = UITheme.CreateCard();
+        _root.AddChild(topCard);
+
         var hbox = new HBoxContainer();
         hbox.AddThemeConstantOverride("separation", UITheme.Padding);
-        _root.AddChild(hbox);
+        topCard.AddChild(hbox);
 
         var clubName = UITheme.CreateLabel(
-            $"⚽ {_playerClub.Name}", UITheme.FontSizeHeading, UITheme.TextPrimary);
+            _playerClub.Name, UITheme.FontSizeHeading, UITheme.TextDark);
         clubName.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         hbox.AddChild(clubName);
 
-        var money = UITheme.CreateLabel(
-            $"💰 {_playerClub.Balance:C0}", UITheme.FontSizeBody, UITheme.Green);
-        hbox.AddChild(money);
-
-        var rep = UITheme.CreateLabel(
-            $"⭐ {_gameState.Manager.Reputation}", UITheme.FontSizeBody, UITheme.Yellow);
-        hbox.AddChild(rep);
-
-        var squad = UITheme.CreateLabel(
-            $"👥 {_playerClub.Team.Players.Count}", UITheme.FontSizeBody, UITheme.Blue);
-        hbox.AddChild(squad);
+        hbox.AddChild(CreateInfoChip(FormatMoney(_playerClub.Balance), UITheme.Green));
+        hbox.AddChild(CreateInfoChip($"{_gameState.Manager.Reputation}", UITheme.Yellow));
+        hbox.AddChild(CreateInfoChip($"{_playerClub.Team.Players.Count}", UITheme.Blue));
     }
+
+    // ─── Season progress bar ──────────────────────────────────────────
+
+    private void BuildSeasonProgress()
+    {
+        float progress = (float)(_gameState.CurrentDayIndex + 1) / _gameState.Calendar.Count;
+
+        var hbox = new HBoxContainer();
+        hbox.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        _root.AddChild(hbox);
+
+        var label = UITheme.CreateLabel("Season",
+            UITheme.FontSizeCaption, UITheme.TextSecondary);
+        hbox.AddChild(label);
+
+        var bar = UITheme.CreateProgressBar(
+            progress * 100, 100, UITheme.Green, null,
+            new Vector2(0, 12));
+        bar.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        hbox.AddChild(bar);
+
+        var pct = UITheme.CreateLabel($"{progress * 100:F0}%",
+            UITheme.FontSizeCaption, UITheme.Green);
+        hbox.AddChild(pct);
+    }
+
+    // ─── Day card (main focal point) ──────────────────────────────────
 
     private void BuildDayCard()
     {
@@ -93,93 +114,104 @@ public partial class DayHub : Control
             return;
         }
 
-        var day = _gameState.CurrentDay;
-        string dayEmoji = day.Type switch
+        SeasonDay day = _gameState.CurrentDay;
+
+        // Pick accent color and emoji by day type
+        (string emoji, string dayName, Color accent) = day.Type switch
         {
-            DayType.Training => "🏋️",
-            DayType.Rest => "😴",
-            DayType.MatchDay => "⚽",
-            DayType.MundialMatchDay => "🏆",
-            DayType.TransferWindow => "💰",
-            _ => "📅"
+            DayType.Training => ("🏋️", "Training Day", UITheme.Blue),
+            DayType.Rest => ("😴", "Rest Day", UITheme.TextSecondary),
+            DayType.MatchDay => ("⚽", "Match Day — National", UITheme.Green),
+            DayType.MundialMatchDay => ("🏆", "Match Day — Mundial", UITheme.Yellow),
+            DayType.TransferWindow => ("💰", "Transfer Window", UITheme.Orange),
+            _ => ("📅", "Day", UITheme.TextSecondary),
         };
 
-        string dayName = day.Type switch
-        {
-            DayType.Training => "Training Day",
-            DayType.Rest => "Rest Day",
-            DayType.MatchDay => "Match Day — National",
-            DayType.MundialMatchDay => "Match Day — Mundial",
-            DayType.TransferWindow => "Transfer Window",
-            _ => "Day"
-        };
+        var dayCard = UITheme.CreateCard(accent);
+        dayCard.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _root.AddChild(dayCard);
 
-        var card = UITheme.CreateCard();
-        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        _root.AddChild(card);
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 8);
+        dayCard.AddChild(vbox);
 
-        var cardContent = new VBoxContainer();
-        cardContent.AddThemeConstantOverride("separation", 8);
-        card.AddChild(cardContent);
+        // Day number + emoji
+        vbox.AddChild(UITheme.CreateLabel($"{emoji}  Day {day.Day}",
+            UITheme.FontSizeTitle, accent, HorizontalAlignment.Center));
 
-        var dayHeader = UITheme.CreateLabel(
-            $"{dayEmoji} Day {day.Day} — {dayName}",
-            UITheme.FontSizeHeading, UITheme.TextPrimary, HorizontalAlignment.Center);
-        cardContent.AddChild(dayHeader);
-
-        var dayProgress = UITheme.CreateLabel(
-            $"Season progress: {_gameState.CurrentDayIndex + 1} / {_gameState.Calendar.Count}",
-            UITheme.FontSizeSmall, UITheme.TextSecondary, HorizontalAlignment.Center);
-        cardContent.AddChild(dayProgress);
+        vbox.AddChild(UITheme.CreateLabel(dayName,
+            UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
     }
+
+    // ─── Calendar preview (colored dots for upcoming days) ────────────
 
     private void BuildCalendarPreview()
     {
         var card = UITheme.CreateCard();
         _root.AddChild(card);
 
-        var hbox = new HBoxContainer();
-        hbox.AddThemeConstantOverride("separation", 4);
-        card.AddChild(hbox);
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 8);
+        card.AddChild(vbox);
 
-        // Show next 10 days as colored dots
+        var dotsRow = new HBoxContainer();
+        dotsRow.AddThemeConstantOverride("separation", 4);
+        vbox.AddChild(dotsRow);
+
         int start = _gameState.CurrentDayIndex;
-        int end = Mathf.Min(start + 12, _gameState.Calendar.Count);
+        int end = Mathf.Min(start + 14, _gameState.Calendar.Count);
 
         for (int i = start; i < end; i++)
         {
-            var dayType = _gameState.Calendar[i].Type;
-            Color color = dayType switch
+            DayType dtype = _gameState.Calendar[i].Type;
+            Color dotColor = dtype switch
             {
                 DayType.Training => UITheme.Blue,
-                DayType.Rest => UITheme.TextSecondary,
+                DayType.Rest => UITheme.Border,
                 DayType.MatchDay => UITheme.Green,
                 DayType.MundialMatchDay => UITheme.Yellow,
                 DayType.TransferWindow => UITheme.Orange,
-                _ => UITheme.Border
+                _ => UITheme.Border,
             };
+
+            bool isCurrent = i == start;
+            float size = isCurrent ? 24 : 16;
 
             var dot = new ColorRect
             {
-                CustomMinimumSize = new Vector2(i == start ? 28 : 20, 28),
-                Color = color,
+                CustomMinimumSize = new Vector2(size, size),
+                Color = dotColor,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
 
-            if (i == start)
+            // Round the dots using a stylebox
+            var dotPanel = new PanelContainer
             {
-                // Current day is larger with border
-                dot.CustomMinimumSize = new Vector2(28, 28);
-            }
-
-            hbox.AddChild(dot);
+                CustomMinimumSize = new Vector2(size, size),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            var dotStyle = new StyleBoxFlat
+            {
+                BgColor = dotColor,
+                CornerRadiusTopLeft = (int)(size / 2),
+                CornerRadiusTopRight = (int)(size / 2),
+                CornerRadiusBottomLeft = (int)(size / 2),
+                CornerRadiusBottomRight = (int)(size / 2),
+            };
+            dotPanel.AddThemeStyleboxOverride("panel", dotStyle);
+            dotsRow.AddChild(dotPanel);
         }
 
+        // Legend
         var legend = UITheme.CreateLabel(
-            "🔵 Train  ⚪ Rest  🟢 National  🟡 Mundial  🟠 Transfers",
-            UITheme.FontSizeCaption, UITheme.TextSecondary);
-        hbox.AddChild(legend);
+            "🔵 Train   ⚪ Rest   🟢 National   🟡 Mundial   🟠 Transfer",
+            UITheme.FontSizeCaption, UITheme.TextSecondary, HorizontalAlignment.Center);
+        vbox.AddChild(legend);
     }
+
+    // ─── Action buttons ───────────────────────────────────────────────
 
     private void BuildActionButtons()
     {
@@ -187,55 +219,68 @@ public partial class DayHub : Control
         hbox.AddThemeConstantOverride("separation", UITheme.Padding);
         _root.AddChild(hbox);
 
-        var day = _gameState.CurrentDay;
+        SeasonDay day = _gameState.CurrentDay;
 
         if (day.Type is DayType.MatchDay or DayType.MundialMatchDay)
         {
-            var matchBtn = UITheme.CreateButton("⚽ Play Match", UITheme.Green);
+            var matchBtn = UITheme.CreateButton("Play Match", UITheme.Green);
             matchBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             matchBtn.Pressed += OnPlayMatch;
             hbox.AddChild(matchBtn);
         }
         else if (day.Type == DayType.TransferWindow)
         {
-            var transferBtn = UITheme.CreateButton("💰 Open Transfers", UITheme.Orange);
+            var transferBtn = UITheme.CreateButton("Open Transfers", UITheme.Orange);
             transferBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             transferBtn.Pressed += OnOpenTransfers;
             hbox.AddChild(transferBtn);
         }
         else
         {
-            var advanceBtn = UITheme.CreateButton("⏭️ Advance Day", UITheme.Blue);
+            var advanceBtn = UITheme.CreateButton("Advance Day", UITheme.Blue);
             advanceBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             advanceBtn.Pressed += OnAdvanceDay;
             hbox.AddChild(advanceBtn);
         }
 
-        // Squad button (always available)
-        var squadBtn = UITheme.CreateButton("📋 Squad", UITheme.BlueDark);
+        var squadBtn = UITheme.CreateButton("Squad", UITheme.BlueDark);
         squadBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/Squad.tscn");
         hbox.AddChild(squadBtn);
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────
+
+    private static PanelContainer CreateInfoChip(string text, Color color)
+    {
+        var badge = UITheme.CreateBadge(text, color, UITheme.TextLight,
+            UITheme.FontSizeSmall, new Vector2(56, 32));
+        return badge;
+    }
+
+    private static string FormatMoney(decimal amount)
+    {
+        return amount switch
+        {
+            >= 1_000_000 => $"{amount / 1_000_000:F1}M",
+            >= 1_000 => $"{amount / 1_000:F0}K",
+            _ => $"{amount:F0}",
+        };
+    }
+
+    // ─── Navigation handlers ──────────────────────────────────────────
+
     private void OnAdvanceDay()
     {
-        var result = _gameState.AdvanceDay();
+        DayResult result = _gameState.AdvanceDay();
         AutoSave();
 
-        if (result.GameOver)
+        if (result.GameOver || result.Finished || result.Victory)
         {
             SceneManager.Instance.ChangeScene("res://scenes/SeasonEnd.tscn");
             return;
         }
 
-        if (result.Finished || result.Victory)
-        {
-            SceneManager.Instance.ChangeScene("res://scenes/SeasonEnd.tscn");
-            return;
-        }
-
-        // Rebuild UI for new day
         BuildUI();
     }
 
