@@ -250,6 +250,18 @@ public partial class DayHub : Control
             advanceBtn.Pressed += OnAdvanceDay;
             hbox.AddChild(advanceBtn);
         }
+        else if (day.Type == DayType.Training)
+        {
+            var trainBtn = UITheme.CreateButton("Train", UITheme.Blue);
+            trainBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            trainBtn.Pressed += () =>
+                SceneManager.Instance.ChangeScene("res://scenes/Training.tscn");
+            hbox.AddChild(trainBtn);
+
+            var advanceBtn = UITheme.CreateButton("Skip Day", UITheme.Border, UITheme.TextPrimary);
+            advanceBtn.Pressed += OnAdvanceDay;
+            hbox.AddChild(advanceBtn);
+        }
         else
         {
             var advanceBtn = UITheme.CreateButton("Advance Day", UITheme.Blue);
