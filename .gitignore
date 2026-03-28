@@ -21,6 +21,10 @@ TestResults/
 .DS_Store
 Thumbs.db
 
+# Screenshots
+Screenshot*.png
+Screenshot*.png.import
+
 # Editor
 .vscode/
 .idea/
