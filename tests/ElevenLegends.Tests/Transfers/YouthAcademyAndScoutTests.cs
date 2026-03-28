@@ -11,7 +11,7 @@ public class YouthAcademyAndScoutTests
     public void YouthAcademy_Generates3Prospects()
     {
         var rng = new SeededRng(42);
-        var prospects = YouthAcademy.GenerateProspects(rng, "Brasilândia", nextPlayerId: 1000);
+        var prospects = YouthAcademy.GenerateProspects(rng, "Brasil", nextPlayerId: 1000);
 
         Assert.Equal(3, prospects.Count);
     }
@@ -20,7 +20,7 @@ public class YouthAcademyAndScoutTests
     public void YouthAcademy_ProspectsAreYoung()
     {
         var rng = new SeededRng(42);
-        var prospects = YouthAcademy.GenerateProspects(rng, "Brasilândia", nextPlayerId: 1000);
+        var prospects = YouthAcademy.GenerateProspects(rng, "Brasil", nextPlayerId: 1000);
 
         Assert.All(prospects, p =>
         {
@@ -32,7 +32,7 @@ public class YouthAcademyAndScoutTests
     public void YouthAcademy_ProspectsHaveUniquIds()
     {
         var rng = new SeededRng(42);
-        var prospects = YouthAcademy.GenerateProspects(rng, "Brasilândia", nextPlayerId: 1000);
+        var prospects = YouthAcademy.GenerateProspects(rng, "Brasil", nextPlayerId: 1000);
 
         var ids = prospects.Select(p => p.Prospect.Id).ToList();
         Assert.Equal(3, ids.Distinct().Count());
@@ -42,7 +42,7 @@ public class YouthAcademyAndScoutTests
     public void YouthAcademy_FeeInReasonableRange()
     {
         var rng = new SeededRng(42);
-        var prospects = YouthAcademy.GenerateProspects(rng, "Brasilândia", nextPlayerId: 1000);
+        var prospects = YouthAcademy.GenerateProspects(rng, "Brasil", nextPlayerId: 1000);
 
         Assert.All(prospects, p =>
         {
@@ -56,8 +56,8 @@ public class YouthAcademyAndScoutTests
         var rng1 = new SeededRng(42);
         var rng2 = new SeededRng(42);
 
-        var brProspects = YouthAcademy.GenerateProspects(rng1, "Brasilândia", 1000);
-        var engProspects = YouthAcademy.GenerateProspects(rng2, "Angleterre", 2000);
+        var brProspects = YouthAcademy.GenerateProspects(rng1, "Brasil", 1000);
+        var engProspects = YouthAcademy.GenerateProspects(rng2, "England", 2000);
 
         // Different country pools should produce different name patterns
         Assert.NotEqual(brProspects[0].Prospect.Name, engProspects[0].Prospect.Name);
@@ -99,7 +99,7 @@ public class YouthAcademyAndScoutTests
     [Fact]
     public void ScoutingSystem_Scout_PlayersHaveValidAttributes()
     {
-        var region = ScoutingSystem.GetRegions()[0]; // Brasilândia
+        var region = ScoutingSystem.GetRegions()[0]; // Brasil
         var rng = new SeededRng(42);
 
         var results = ScoutingSystem.Scout(rng, region, nextPlayerId: 500);
@@ -163,7 +163,7 @@ public class YouthAcademyAndScoutTests
         {
             Id = ids[0] * 100,
             Name = $"Club {ids[0]}",
-            Country = "Brasilândia",
+            Country = "Brasil",
             Balance = 100_000m,
             Reputation = 50,
             Team = new Team

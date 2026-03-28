@@ -141,16 +141,16 @@ public static class YouthAcademy
     {
         return country switch
         {
-            "Brasilândia" => (
+            "Brasil" => (
                 new[] { "Lucas", "Gabriel", "Matheus", "Rafael", "Pedro", "João", "Bruno", "Vinícius", "Kaio", "Enzo" },
                 new[] { "Silva", "Santos", "Oliveira", "Souza", "Lima", "Costa", "Ferreira", "Almeida", "Pereira", "Nascimento" }),
-            "Hispânia" => (
+            "España" => (
                 new[] { "Carlos", "Diego", "Alejandro", "Pablo", "Miguel", "Sergio", "Álvaro", "Javier", "Hugo", "Adrián" },
                 new[] { "García", "Rodríguez", "Martínez", "López", "Hernández", "Fernández", "Sánchez", "Pérez", "Ruiz", "Torres" }),
-            "Angleterre" => (
+            "England" => (
                 new[] { "James", "Oliver", "Harry", "Jack", "George", "Charlie", "Thomas", "William", "Daniel", "Samuel" },
                 new[] { "Smith", "Jones", "Williams", "Brown", "Taylor", "Johnson", "Wilson", "Davies", "Robinson", "Thompson" }),
-            "Itália Nova" => (
+            "Italia" => (
                 new[] { "Marco", "Luca", "Alessandro", "Francesco", "Lorenzo", "Matteo", "Andrea", "Simone", "Giuseppe", "Davide" },
                 new[] { "Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci", "Marino", "Greco" }),
             _ => (

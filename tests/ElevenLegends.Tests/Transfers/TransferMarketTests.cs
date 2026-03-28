@@ -183,7 +183,7 @@ public class TransferMarketTests
 
         var clubA = new Club
         {
-            Id = 1, Name = "Club A", Country = "Brasilândia",
+            Id = 1, Name = "Club A", Country = "Brasil",
             Balance = 300_000m, Reputation = 70,
             Team = new Team
             {
@@ -195,7 +195,7 @@ public class TransferMarketTests
 
         var clubB = new Club
         {
-            Id = 2, Name = "Club B", Country = "Hispânia",
+            Id = 2, Name = "Club B", Country = "España",
             Balance = 200_000m, Reputation = 60,
             Team = new Team
             {

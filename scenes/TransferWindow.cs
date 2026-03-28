@@ -116,7 +116,7 @@ public partial class TransferWindow : Control
             countryRow.AddThemeConstantOverride("separation", 4);
             root.AddChild(countryRow);
 
-            string[] countries = ["All", "Brasilândia", "Hispânia", "Angleterre", "Itália Nova"];
+            string[] countries = ["All", "Brasil", "España", "England", "Italia"];
             foreach (string country in countries)
             {
                 string display = country == "All" ? "All Countries" : country;

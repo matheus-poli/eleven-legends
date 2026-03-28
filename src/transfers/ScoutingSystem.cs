@@ -13,49 +13,49 @@ public static class ScoutingSystem
     [
         new()
         {
-            Name = "Brasilândia",
+            Name = "Brasil",
             Cost = 5_000m,
             FirstNames = ["Lucas", "Gabriel", "Matheus", "Rafael", "Pedro", "João", "Bruno", "Vinícius"],
             LastNames = ["Silva", "Santos", "Oliveira", "Souza", "Lima", "Costa", "Ferreira", "Almeida"]
         },
         new()
         {
-            Name = "Hispânia",
+            Name = "España",
             Cost = 5_000m,
             FirstNames = ["Carlos", "Diego", "Alejandro", "Pablo", "Miguel", "Sergio", "Álvaro", "Javier"],
             LastNames = ["García", "Rodríguez", "Martínez", "López", "Hernández", "Fernández", "Sánchez", "Pérez"]
         },
         new()
         {
-            Name = "Angleterre",
+            Name = "England",
             Cost = 4_500m,
             FirstNames = ["James", "Oliver", "Harry", "Jack", "George", "Charlie", "Thomas", "William"],
             LastNames = ["Smith", "Jones", "Williams", "Brown", "Taylor", "Johnson", "Wilson", "Davies"]
         },
         new()
         {
-            Name = "Itália Nova",
+            Name = "Italia",
             Cost = 4_500m,
             FirstNames = ["Marco", "Luca", "Alessandro", "Francesco", "Lorenzo", "Matteo", "Andrea", "Simone"],
             LastNames = ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci"]
         },
         new()
         {
-            Name = "África",
+            Name = "Africa",
             Cost = 2_000m,
             FirstNames = ["Kwame", "Abdou", "Moussa", "Ibrahim", "Youssef", "Amara", "Kofi", "Sekou"],
             LastNames = ["Diallo", "Touré", "Traoré", "Coulibaly", "Diop", "Camara", "Sylla", "Keita"]
         },
         new()
         {
-            Name = "Ásia",
+            Name = "Asia",
             Cost = 2_500m,
             FirstNames = ["Takumi", "Hiroshi", "Jin", "Wei", "Min-Jun", "Ryu", "Haruto", "Yuto"],
             LastNames = ["Tanaka", "Kim", "Park", "Chen", "Lee", "Yamamoto", "Suzuki", "Watanabe"]
         },
         new()
         {
-            Name = "Américas",
+            Name = "Americas",
             Cost = 2_500m,
             FirstNames = ["Santiago", "Matías", "Nicolás", "Sebastián", "Tomás", "Valentín", "Emiliano", "Thiago"],
             LastNames = ["González", "Muñoz", "Rojas", "Díaz", "Reyes", "Morales", "Jiménez", "Vargas"]

@@ -11,39 +11,39 @@ namespace ElevenLegends.Data.Generators;
 public static class TeamGenerator
 {
     private static readonly string[] Countries =
-        ["Brasilândia", "Hispânia", "Angleterre", "Itália Nova"];
+        ["Brasil", "España", "England", "Italia"];
 
     private static readonly string[][] TeamNames =
     [
-        // Brasilândia
+        // Brasil
         ["Flamingos FC", "Palmares SC", "São Marcos EC", "Coríntios SC",
          "Cruzado EC", "Botafoguense FC", "Atleticano MG", "Gremista RS"],
-        // Hispânia
+        // España
         ["Real Madriz CF", "FC Barcino", "Atlético Madriz", "Sevícia FC",
          "Valência CF", "Real Bétis CF", "Villarejo CF", "Athletic Bilbão"],
-        // Angleterre
+        // England
         ["Redpool FC", "Mancastle United", "Chelsington FC", "Gunners FC",
          "Totterham FC", "Mancastle City", "Leicestershire FC", "Evertown FC"],
-        // Itália Nova
+        // Italia
         ["Juventa FC", "AC Milanello", "Inter Milanello", "AS Romagna",
          "SS Lazzio", "SSC Napolitano", "Fiorença FC", "Atalância FC"]
     ];
 
     private static readonly string[][] FirstNames =
     [
-        // Brasilândia
+        // Brasil
         ["Lucas", "Gabriel", "Matheus", "Pedro", "Rafael", "André", "Bruno",
          "Carlos", "Diego", "Eduardo", "Felipe", "Gustavo", "Hugo", "Igor",
          "João", "Kaio", "Leonardo", "Marcos", "Neto", "Oscar"],
-        // Hispânia
+        // España
         ["Alejandro", "Carlos", "Diego", "Fernando", "Gonzalo", "Héctor",
          "Iván", "Javier", "Luis", "Miguel", "Pablo", "Raúl", "Sergio",
          "Tomás", "Álvaro", "Andrés", "Borja", "César", "Dani", "Enrique"],
-        // Angleterre
+        // England
         ["James", "Thomas", "Oliver", "Harry", "Jack", "Charlie", "George",
          "William", "Henry", "Alexander", "Daniel", "Luke", "Ryan", "Marcus",
          "Jordan", "Kyle", "Aaron", "Ben", "Chris", "David"],
-        // Itália Nova
+        // Italia
         ["Alessandro", "Marco", "Lorenzo", "Francesco", "Andrea", "Gianluca",
          "Paolo", "Roberto", "Stefano", "Giuseppe", "Luca", "Matteo",
          "Nicola", "Fabio", "Davide", "Giovanni", "Simone", "Antonio",
@@ -52,21 +52,21 @@ public static class TeamGenerator
 
     private static readonly string[][] LastNames =
     [
-        // Brasilândia
+        // Brasil
         ["Silva", "Santos", "Oliveira", "Souza", "Pereira", "Costa",
          "Rodrigues", "Ferreira", "Almeida", "Nascimento", "Lima", "Araújo",
          "Ribeiro", "Carvalho", "Gomes", "Martins", "Rocha", "Moura",
          "Barbosa", "Cavalcanti"],
-        // Hispânia
+        // España
         ["García", "Rodríguez", "Martínez", "López", "González", "Hernández",
          "Pérez", "Sánchez", "Ramírez", "Torres", "Flores", "Rivera",
          "Gómez", "Díaz", "Ruiz", "Moreno", "Jiménez", "Álvarez",
          "Romero", "Navarro"],
-        // Angleterre
+        // England
         ["Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis",
          "Wilson", "Moore", "Taylor", "Anderson", "Jackson", "White",
          "Harris", "Martin", "Thompson", "Clark", "Walker", "Hall", "Young"],
-        // Itália Nova
+        // Italia
         ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano",
          "Colombo", "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti",
          "De Luca", "Costa", "Mancini", "Barbieri", "Fontana", "Santoro",
