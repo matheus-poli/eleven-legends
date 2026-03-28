@@ -114,10 +114,12 @@ public partial class Squad : Control
         _benchList.AddThemeConstantOverride("separation", 4);
         benchScroll.AddChild(_benchList);
 
-        // Setup pitch with optimal lineup for current formation
-        IReadOnlyList<int> optimalIds = FormationOptimizer.OptimalLineup(
-            _playerClub.Team.Players, _currentFormation);
-        _pitchView.Setup(_playerClub.Team.Players, _currentFormation, optimalIds);
+        // Setup pitch with saved lineup (or optimizer fallback if no saved lineup)
+        IReadOnlyList<int> savedLineup = _playerClub.Team.StartingLineup;
+        IReadOnlyList<int> initialIds = savedLineup.Count == 11
+            ? savedLineup
+            : FormationOptimizer.OptimalLineup(_playerClub.Team.Players, _currentFormation);
+        _pitchView.Setup(_playerClub.Team.Players, _currentFormation, initialIds);
         _pitchView.LineupChanged += RebuildBench;
         _pitchView.PlayerClicked += OnPlayerClicked;
 
@@ -167,13 +169,72 @@ public partial class Squad : Control
 
     private void OnFormationSelected(Formation formation)
     {
+        // Keep the same 11 players on the pitch, just rearrange them
+        // into the new formation's slot positions by best fit
+        IReadOnlyList<int> currentOnPitch = _pitchView.SlotPlayerIds
+            .Where(id => id > 0).ToList();
+
+        IReadOnlyList<int> rearranged = RearrangeForFormation(
+            currentOnPitch, formation);
+
         _currentFormation = formation;
-        IReadOnlyList<int> optimalIds = FormationOptimizer.OptimalLineup(
-            _playerClub.Team.Players, _currentFormation);
-        _pitchView.SetFormation(_currentFormation, optimalIds);
+        _pitchView.SetFormation(_currentFormation, rearranged);
 
         BuildFormationButtons();
         RebuildBench();
+    }
+
+    /// <summary>
+    /// Rearranges the given player IDs into the best-fit slots for a new formation.
+    /// Keeps the same 11 players — only changes which slot each occupies.
+    /// </summary>
+    private IReadOnlyList<int> RearrangeForFormation(
+        IReadOnlyList<int> playerIds, Formation formation)
+    {
+        var playerMap = _playerClub.Team.Players.ToDictionary(p => p.Id);
+        var available = new HashSet<int>(playerIds);
+        int[] result = new int[formation.Positions.Count];
+
+        // Assign each slot: pick the best available player for that position
+        // Prioritize exact position match, then secondary, then best OVR
+        int[] slotOrder = Enumerable.Range(0, formation.Positions.Count)
+            .OrderBy(i => formation.Positions[i] == PlayerPosition.GK ? 0 : 1)
+            .ToArray();
+
+        foreach (int slotIdx in slotOrder)
+        {
+            PlayerPosition slotPos = formation.Positions[slotIdx];
+            int bestId = -1;
+            float bestScore = float.MinValue;
+
+            foreach (int pid in available)
+            {
+                if (!playerMap.TryGetValue(pid, out Player? p)) continue;
+
+                float score = p.Attributes.OverallForPosition(
+                    (ElevenLegends.Data.Enums.Position)slotPos);
+
+                // Strong preference for natural position match
+                if (p.PrimaryPosition == (ElevenLegends.Data.Enums.Position)slotPos)
+                    score += 20f;
+                else if (p.SecondaryPosition == (ElevenLegends.Data.Enums.Position)slotPos)
+                    score += 10f;
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestId = pid;
+                }
+            }
+
+            if (bestId > 0)
+            {
+                result[slotIdx] = bestId;
+                available.Remove(bestId);
+            }
+        }
+
+        return result;
     }
 
     private void RebuildBench()
