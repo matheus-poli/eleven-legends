@@ -102,13 +102,14 @@ public class YouthAcademyAndScoutTests
         var region = ScoutingSystem.GetRegions()[0]; // Brasilândia
         var rng = new SeededRng(42);
 
-        var players = ScoutingSystem.Scout(rng, region, nextPlayerId: 500);
+        var results = ScoutingSystem.Scout(rng, region, nextPlayerId: 500);
 
-        Assert.All(players, player =>
+        Assert.All(results, result =>
         {
-            Assert.InRange(player.Age, 19, 33);
-            Assert.True(player.Attributes.OutfieldOverall > 0 || player.Attributes.GoalkeeperOverall > 0);
-            Assert.False(string.IsNullOrEmpty(player.Name));
+            Assert.InRange(result.Player.Age, 19, 33);
+            Assert.True(result.Player.Attributes.OutfieldOverall > 0 || result.Player.Attributes.GoalkeeperOverall > 0);
+            Assert.False(string.IsNullOrEmpty(result.Player.Name));
+            Assert.True(result.SignFee >= 0);
         });
     }
 
@@ -118,8 +119,8 @@ public class YouthAcademyAndScoutTests
         var region = ScoutingSystem.GetRegions()[4]; // África
         var rng = new SeededRng(42);
 
-        var players = ScoutingSystem.Scout(rng, region, nextPlayerId: 500);
-        var ids = players.Select(p => p.Id).ToList();
+        var results = ScoutingSystem.Scout(rng, region, nextPlayerId: 500);
+        var ids = results.Select(r => r.Player.Id).ToList();
 
         Assert.Equal(ids.Count, ids.Distinct().Count());
     }

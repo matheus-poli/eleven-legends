@@ -388,30 +388,31 @@ public static class TransferWindowUI
         var rng = new SeededRng(gameState.CurrentDay.Day * 13 + regionChoice);
         var freeAgents = ScoutingSystem.Scout(rng, region, nextId);
 
-        System.Console.WriteLine($"\n  🔍 Scouting report from {region.Name} — {freeAgents.Count} players found:\n");
+        System.Console.WriteLine($"\n  Scouting report from {region.Name} — {freeAgents.Count} players found:\n");
         for (int i = 0; i < freeAgents.Count; i++)
         {
-            var player = freeAgents[i];
+            (Player player, decimal signFee) = freeAgents[i];
             float ovr = GetOverall(player);
+            string feeText = signFee > 0 ? $"Fee:{signFee / 1000:F0}K" : "Free";
             System.Console.WriteLine(
-                $"  {i + 1}. {player.Name,-20} {player.PrimaryPosition,-4} Age:{player.Age,2} OVR:{ovr:F0}");
+                $"  {i + 1}. {player.Name,-20} {player.PrimaryPosition,-4} Age:{player.Age,2} OVR:{ovr:F0} {feeText}");
         }
 
         System.Console.WriteLine($"   0. Don't recruit anyone");
         int pick = ReadChoice(0, freeAgents.Count);
         if (pick == 0) return;
 
-        var chosen = freeAgents[pick - 1];
-        if (TransferMarket.AddFreeAgent(playerClub, chosen))
+        (Player chosen, decimal chosenFee) = freeAgents[pick - 1];
+        if (TransferMarket.AddFreeAgent(playerClub, chosen, chosenFee))
         {
-            System.Console.WriteLine($"\n  ✅ Recruited {chosen.Name} as a free agent!");
+            System.Console.WriteLine($"\n  Recruited {chosen.Name}!");
             var record = new TransferRecord
             {
                 Type = TransferType.ScoutRecruit,
                 PlayerId = chosen.Id,
                 PlayerName = chosen.Name,
                 ToClubId = playerClub.Id,
-                Fee = 0m,
+                Fee = chosenFee,
                 Day = gameState.CurrentDay.Day
             };
             records.Add(record);

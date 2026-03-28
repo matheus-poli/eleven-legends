@@ -135,7 +135,7 @@ public class TransferMarketTests
     }
 
     [Fact]
-    public void GetAvailablePlayers_ExcludesStarters()
+    public void GetAvailablePlayers_IncludesStartersWithHigherPrice()
     {
         var (_, seller) = CreateTwoClubs();
         var clubs = new List<Club> { seller };
@@ -143,7 +143,18 @@ public class TransferMarketTests
         var available = TransferMarket.GetAvailablePlayers(clubs, excludeClubId: -1);
 
         var starterSet = new HashSet<int>(seller.Team.StartingLineup);
-        Assert.All(available, a => Assert.DoesNotContain(a.Player.Id, starterSet));
+        var starterListings = available.Where(a => starterSet.Contains(a.Player.Id)).ToList();
+        var reserveListings = available.Where(a => !starterSet.Contains(a.Player.Id)).ToList();
+
+        // Starters should be included but with higher prices (release clause)
+        Assert.NotEmpty(starterListings);
+        Assert.NotEmpty(reserveListings);
+
+        // Starter price should be significantly higher than reserve price for same OVR
+        if (starterListings.Count > 0 && reserveListings.Count > 0)
+        {
+            Assert.True(starterListings.Average(s => s.Price) > reserveListings.Average(r => r.Price));
+        }
     }
 
     [Fact]

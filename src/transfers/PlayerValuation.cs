@@ -17,8 +17,8 @@ public static class PlayerValuation
             ? player.Attributes.GoalkeeperOverall
             : player.Attributes.OutfieldOverall;
 
-        // Exponential base value from overall (65 ovr ≈ 50k, 75 ≈ 150k, 85 ≈ 500k)
-        decimal baseValue = (decimal)Math.Pow(overall / 10.0, 3.5) * 15m;
+        // Exponential base value from overall (55 ovr ≈ 30k, 65 ≈ 80k, 75 ≈ 300k, 85 ≈ 1.2M)
+        decimal baseValue = (decimal)Math.Pow(overall / 10.0, 4.0) * 30m;
 
         // Age factor: peak 25-28, young premium, old discount
         decimal ageFactor = GetAgeFactor(player.Age);

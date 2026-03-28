@@ -13,7 +13,9 @@ public static class TransferMarket
     public const int MaxSquadSize = 22;
 
     /// <summary>
-    /// Returns players from other clubs that are available for purchase.
+    /// Returns ALL players from other clubs with transfer prices.
+    /// Starters have a release clause multiplier (3-5x).
+    /// Clubs at minimum squad can only sell non-essential players.
     /// </summary>
     public static List<(Player Player, Club Club, decimal Price)> GetAvailablePlayers(
         IReadOnlyList<Club> clubs, int excludeClubId)
@@ -23,13 +25,19 @@ public static class TransferMarket
         foreach (var club in clubs)
         {
             if (club.Id == excludeClubId) continue;
-            if (club.Team.Players.Count <= MinSquadSize) continue;
 
             var starterSet = new HashSet<int>(club.Team.StartingLineup);
             foreach (var player in club.Team.Players)
             {
-                if (starterSet.Contains(player.Id)) continue;
-                decimal price = PlayerValuation.Calculate(player, club.Reputation);
+                decimal basePrice = PlayerValuation.Calculate(player, club.Reputation);
+
+                // Starters have a massive release clause
+                bool isStarter = starterSet.Contains(player.Id);
+                decimal price = isStarter ? basePrice * 4m : basePrice;
+
+                // Can't buy if it would leave club below minimum
+                if (!CanRemovePlayer(club, player)) continue;
+
                 available.Add((player, club, price));
             }
         }
@@ -83,10 +91,17 @@ public static class TransferMarket
     /// <summary>
     /// Executes a player purchase. Returns true if successful.
     /// </summary>
+    /// <summary>
+    /// Minimum balance to keep after a purchase (reserve for 1 week of salary).
+    /// </summary>
+    public static decimal SalaryReserve(Club club) =>
+        Economy.EconomyProcessor.CalculateWeeklySalary(club);
+
     public static bool ExecuteBuy(Club buyer, Club seller, Player player, decimal price)
     {
         if (buyer.Team.Players.Count >= MaxSquadSize) return false;
-        if (buyer.Balance < price) return false;
+        decimal reserve = SalaryReserve(buyer);
+        if (buyer.Balance - price < reserve) return false;
         if (!seller.Team.Players.Contains(player)) return false;
         if (!CanRemovePlayer(seller, player)) return false;
 
@@ -161,7 +176,8 @@ public static class TransferMarket
     public static bool AddFreeAgent(Club club, Player player, decimal fee = 0m)
     {
         if (club.Team.Players.Count >= MaxSquadSize) return false;
-        if (fee > 0 && club.Balance < fee) return false;
+        decimal reserve = fee > 0 ? SalaryReserve(club) : 0;
+        if (fee > 0 && club.Balance - fee < reserve) return false;
 
         if (fee > 0)
             club.Balance -= fee;

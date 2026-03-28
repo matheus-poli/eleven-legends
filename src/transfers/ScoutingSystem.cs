@@ -14,28 +14,28 @@ public static class ScoutingSystem
         new()
         {
             Name = "Brasilândia",
-            Cost = 3_000m,
+            Cost = 5_000m,
             FirstNames = ["Lucas", "Gabriel", "Matheus", "Rafael", "Pedro", "João", "Bruno", "Vinícius"],
             LastNames = ["Silva", "Santos", "Oliveira", "Souza", "Lima", "Costa", "Ferreira", "Almeida"]
         },
         new()
         {
             Name = "Hispânia",
-            Cost = 3_000m,
+            Cost = 5_000m,
             FirstNames = ["Carlos", "Diego", "Alejandro", "Pablo", "Miguel", "Sergio", "Álvaro", "Javier"],
             LastNames = ["García", "Rodríguez", "Martínez", "López", "Hernández", "Fernández", "Sánchez", "Pérez"]
         },
         new()
         {
             Name = "Angleterre",
-            Cost = 3_000m,
+            Cost = 4_500m,
             FirstNames = ["James", "Oliver", "Harry", "Jack", "George", "Charlie", "Thomas", "William"],
             LastNames = ["Smith", "Jones", "Williams", "Brown", "Taylor", "Johnson", "Wilson", "Davies"]
         },
         new()
         {
             Name = "Itália Nova",
-            Cost = 3_000m,
+            Cost = 4_500m,
             FirstNames = ["Marco", "Luca", "Alessandro", "Francesco", "Lorenzo", "Matteo", "Andrea", "Simone"],
             LastNames = ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci"]
         },
@@ -70,10 +70,14 @@ public static class ScoutingSystem
     /// <summary>
     /// Scouts a region and reveals 3-5 free agents.
     /// </summary>
-    public static List<Player> Scout(IRng rng, ScoutRegion region, int nextPlayerId)
+    /// <summary>
+    /// Scouts a region and reveals 3-5 players with optional sign fees.
+    /// Better players (OVR 55+) have signing fees.
+    /// </summary>
+    public static List<(Player Player, decimal SignFee)> Scout(IRng rng, ScoutRegion region, int nextPlayerId)
     {
         int count = rng.NextInt(3, 5);
-        var players = new List<Player>();
+        var results = new List<(Player, decimal)>();
 
         for (int i = 0; i < count; i++)
         {
@@ -87,7 +91,7 @@ public static class ScoutingSystem
 
             var attrs = GenerateScoutAttributes(rng, pos, baseAttr);
 
-            players.Add(new Player
+            var player = new Player
             {
                 Id = nextPlayerId + i,
                 Name = name,
@@ -96,10 +100,16 @@ public static class ScoutingSystem
                 Morale = rng.NextInt(40, 65),
                 Chemistry = rng.NextInt(20, 45),
                 Attributes = attrs
-            });
+            };
+
+            // Players with OVR 55+ have a signing fee
+            float ovr = pos == Position.GK ? attrs.GoalkeeperOverall : attrs.OutfieldOverall;
+            decimal signFee = ovr >= 55 ? Math.Round((decimal)(ovr * 150) / 1000m) * 1000m : 0m;
+
+            results.Add((player, signFee));
         }
 
-        return players;
+        return results;
     }
 
     private static Position PickRandomPosition(IRng rng)
