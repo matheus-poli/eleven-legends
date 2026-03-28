@@ -35,14 +35,12 @@ public partial class PreMatch : Control
         var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
-        var root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.Padding,
-            OffsetBottom = -UITheme.Padding,
-        };
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        root.OffsetLeft = UITheme.PaddingLarge;
+        root.OffsetRight = -UITheme.PaddingLarge;
+        root.OffsetTop = UITheme.Padding;
+        root.OffsetBottom = -UITheme.Padding;
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
@@ -173,9 +171,9 @@ public partial class PreMatch : Control
         MatchConfig config = _gameState.BuildPlayerMatchConfig(_ctx, tactics);
         (MatchState state, _) = MatchSimulator.SimulateFirstHalf(config);
 
-        MatchSimScreen.PendingMatchState = state;
-        MatchSimScreen.PendingConfig = config;
-        MatchSimScreen.PendingContext = _ctx;
+        MatchSimulation.PendingMatchState = state;
+        MatchSimulation.PendingConfig = config;
+        MatchSimulation.PendingContext = _ctx;
 
         SceneManager.Instance.ChangeScene("res://scenes/MatchSimulation.tscn");
     }

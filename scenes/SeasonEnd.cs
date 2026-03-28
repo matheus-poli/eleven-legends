@@ -9,7 +9,7 @@ namespace ElevenLegends.Scenes;
 /// <summary>
 /// Season end screen — trophy celebration, game over, or season summary.
 /// </summary>
-public partial class SeasonEndScreen : Control
+public partial class SeasonEnd : Control
 {
     private GameState _gameState = null!;
     private Club _playerClub = null!;
@@ -41,22 +41,16 @@ public partial class SeasonEndScreen : Control
             AddChild(UITheme.CreateGradientBackground(UITheme.Blue, UITheme.BlueDark));
         }
 
-        var root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.PaddingLarge,
-            OffsetBottom = -UITheme.PaddingLarge,
-        };
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect, margin: UITheme.PaddingLarge);
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
         // ─── Outcome header ──────────────────────────────────────
         if (isChampion)
         {
-            var trophy = UITheme.CreateLabel("🏆",
-                UITheme.FontSizeDisplay + 24, UITheme.TextLight, HorizontalAlignment.Center);
+            var trophy = UITheme.CreateIcon("trophy", new Vector2(72, 72));
+            trophy.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             root.AddChild(trophy);
 
             root.AddChild(UITheme.CreateLabel("CHAMPION!",
@@ -74,8 +68,9 @@ public partial class SeasonEndScreen : Control
         }
         else if (isGameOver)
         {
-            root.AddChild(UITheme.CreateLabel("💼",
-                UITheme.FontSizeDisplay, UITheme.TextLight, HorizontalAlignment.Center));
+            var briefcaseIcon = UITheme.CreateIcon("briefcase", new Vector2(64, 64));
+            briefcaseIcon.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            root.AddChild(briefcaseIcon);
             root.AddChild(UITheme.CreateLabel("Game Over",
                 UITheme.FontSizeDisplay, UITheme.Red, HorizontalAlignment.Center));
             root.AddChild(UITheme.CreateLabel("You have been sacked.",
@@ -83,8 +78,9 @@ public partial class SeasonEndScreen : Control
         }
         else
         {
-            root.AddChild(UITheme.CreateLabel("📊",
-                UITheme.FontSizeDisplay, UITheme.TextLight, HorizontalAlignment.Center));
+            var chartIcon = UITheme.CreateIcon("chart-bar", new Vector2(64, 64));
+            chartIcon.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            root.AddChild(chartIcon);
             root.AddChild(UITheme.CreateLabel("Season Complete",
                 UITheme.FontSizeTitle, UITheme.TextLight, HorizontalAlignment.Center));
         }

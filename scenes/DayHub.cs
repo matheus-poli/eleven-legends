@@ -37,14 +37,12 @@ public partial class DayHub : Control
         var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
-        _root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.Padding,
-            OffsetBottom = -UITheme.Padding,
-        };
+        _root = new VBoxContainer();
+        _root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _root.OffsetLeft = UITheme.PaddingLarge;
+        _root.OffsetRight = -UITheme.PaddingLarge;
+        _root.OffsetTop = UITheme.Padding;
+        _root.OffsetBottom = -UITheme.Padding;
         _root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(_root);
 
@@ -74,9 +72,12 @@ public partial class DayHub : Control
         clubName.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         hbox.AddChild(clubName);
 
-        hbox.AddChild(CreateInfoChip(FormatMoney(_playerClub.Balance), UITheme.Green));
-        hbox.AddChild(CreateInfoChip($"{_gameState.Manager.Reputation}", UITheme.Yellow));
-        hbox.AddChild(CreateInfoChip($"{_playerClub.Team.Players.Count}", UITheme.Blue));
+        hbox.AddChild(CreateInfoChip(FormatMoney(_playerClub.Balance), "Budget",
+            "res://assets/icons/coin.svg", UITheme.Green));
+        hbox.AddChild(CreateInfoChip($"{_gameState.Manager.Reputation}", "Rep",
+            "res://assets/icons/star.svg", UITheme.Yellow));
+        hbox.AddChild(CreateInfoChip($"{_playerClub.Team.Players.Count}", "Squad",
+            "res://assets/icons/users.svg", UITheme.Blue));
     }
 
     // ─── Season progress bar ──────────────────────────────────────────
@@ -116,15 +117,15 @@ public partial class DayHub : Control
 
         SeasonDay day = _gameState.CurrentDay;
 
-        // Pick accent color and emoji by day type
-        (string emoji, string dayName, Color accent) = day.Type switch
+        // Pick accent color and icon by day type
+        (string iconName, string dayName, Color accent) = day.Type switch
         {
-            DayType.Training => ("🏋️", "Training Day", UITheme.Blue),
-            DayType.Rest => ("😴", "Rest Day", UITheme.TextSecondary),
-            DayType.MatchDay => ("⚽", "Match Day — National", UITheme.Green),
-            DayType.MundialMatchDay => ("🏆", "Match Day — Mundial", UITheme.Yellow),
-            DayType.TransferWindow => ("💰", "Transfer Window", UITheme.Orange),
-            _ => ("📅", "Day", UITheme.TextSecondary),
+            DayType.Training => ("dumbbell", "Training Day", UITheme.Blue),
+            DayType.Rest => ("moon", "Rest Day", UITheme.TextSecondary),
+            DayType.MatchDay => ("football", "Match Day — National", UITheme.Green),
+            DayType.MundialMatchDay => ("trophy", "Match Day — Mundial", UITheme.Yellow),
+            DayType.TransferWindow => ("banknote", "Transfer Window", UITheme.Orange),
+            _ => ("calendar", "Day", UITheme.TextSecondary),
         };
 
         var dayCard = UITheme.CreateCard(accent);
@@ -135,9 +136,11 @@ public partial class DayHub : Control
         vbox.AddThemeConstantOverride("separation", 8);
         dayCard.AddChild(vbox);
 
-        // Day number + emoji
-        vbox.AddChild(UITheme.CreateLabel($"{emoji}  Day {day.Day}",
-            UITheme.FontSizeTitle, accent, HorizontalAlignment.Center));
+        // Day icon + number
+        var dayHeader = UITheme.CreateIconLabel(iconName, $"Day {day.Day}",
+            UITheme.FontSizeTitle, accent);
+        dayHeader.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        vbox.AddChild(dayHeader);
 
         vbox.AddChild(UITheme.CreateLabel(dayName,
             UITheme.FontSizeBody, UITheme.TextSecondary, HorizontalAlignment.Center));
@@ -205,10 +208,18 @@ public partial class DayHub : Control
         }
 
         // Legend
-        var legend = UITheme.CreateLabel(
-            "🔵 Train   ⚪ Rest   🟢 National   🟡 Mundial   🟠 Transfer",
-            UITheme.FontSizeCaption, UITheme.TextSecondary, HorizontalAlignment.Center);
-        vbox.AddChild(legend);
+        var legendRow = new HBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ShrinkCenter,
+        };
+        legendRow.AddThemeConstantOverride("separation", UITheme.Padding);
+        vbox.AddChild(legendRow);
+
+        AddLegendItem(legendRow, UITheme.Blue, "Train");
+        AddLegendItem(legendRow, UITheme.Border, "Rest");
+        AddLegendItem(legendRow, UITheme.Green, "National");
+        AddLegendItem(legendRow, UITheme.Yellow, "Mundial");
+        AddLegendItem(legendRow, UITheme.Orange, "Transfer");
     }
 
     // ─── Action buttons ───────────────────────────────────────────────
@@ -234,6 +245,10 @@ public partial class DayHub : Control
             transferBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             transferBtn.Pressed += OnOpenTransfers;
             hbox.AddChild(transferBtn);
+
+            var advanceBtn = UITheme.CreateButton("Advance Day", UITheme.Green);
+            advanceBtn.Pressed += OnAdvanceDay;
+            hbox.AddChild(advanceBtn);
         }
         else
         {
@@ -251,11 +266,77 @@ public partial class DayHub : Control
 
     // ─── Helpers ──────────────────────────────────────────────────────
 
-    private static PanelContainer CreateInfoChip(string text, Color color)
+    private static void AddLegendItem(HBoxContainer parent, Color color, string text)
     {
-        var badge = UITheme.CreateBadge(text, color, UITheme.TextLight,
-            UITheme.FontSizeSmall, new Vector2(56, 32));
-        return badge;
+        var hbox = new HBoxContainer();
+        hbox.AddThemeConstantOverride("separation", 4);
+        parent.AddChild(hbox);
+
+        var dot = new PanelContainer { CustomMinimumSize = new Vector2(10, 10) };
+        dot.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+        var dotStyle = new StyleBoxFlat
+        {
+            BgColor = color,
+            CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5,
+            CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5,
+        };
+        dot.AddThemeStyleboxOverride("panel", dotStyle);
+        hbox.AddChild(dot);
+
+        hbox.AddChild(UITheme.CreateLabel(text, UITheme.FontSizeCaption, UITheme.TextSecondary));
+    }
+
+    private static Control CreateInfoChip(string value, string label, string iconPath, Color color)
+    {
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 2);
+
+        // Badge with icon + value
+        var badgeStyle = new StyleBoxFlat
+        {
+            BgColor = color,
+            CornerRadiusTopLeft = UITheme.BadgeCornerRadius,
+            CornerRadiusTopRight = UITheme.BadgeCornerRadius,
+            CornerRadiusBottomLeft = UITheme.BadgeCornerRadius,
+            CornerRadiusBottomRight = UITheme.BadgeCornerRadius,
+            ContentMarginLeft = UITheme.PaddingSmall,
+            ContentMarginRight = UITheme.PaddingSmall + 2,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 4,
+        };
+
+        var badge = new PanelContainer();
+        badge.AddThemeStyleboxOverride("panel", badgeStyle);
+
+        var badgeRow = new HBoxContainer();
+        badgeRow.AddThemeConstantOverride("separation", 4);
+        badge.AddChild(badgeRow);
+
+        // SVG icon
+        Texture2D? iconTex = GD.Load<Texture2D>(iconPath);
+        if (iconTex != null)
+        {
+            var icon = new TextureRect
+            {
+                Texture = iconTex,
+                CustomMinimumSize = new Vector2(16, 16),
+                ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            badgeRow.AddChild(icon);
+        }
+
+        var valueLabel = UITheme.CreateLabel(value, UITheme.FontSizeSmall, UITheme.TextLight);
+        badgeRow.AddChild(valueLabel);
+
+        vbox.AddChild(badge);
+
+        // Label below
+        vbox.AddChild(UITheme.CreateLabel(label,
+            UITheme.FontSizeCaption, UITheme.TextSecondary, HorizontalAlignment.Center));
+
+        return vbox;
     }
 
     private static string FormatMoney(decimal amount)

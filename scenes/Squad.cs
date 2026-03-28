@@ -2,23 +2,33 @@ using Godot;
 using ElevenLegends.Data.Enums;
 using PlayerPosition = ElevenLegends.Data.Enums.Position;
 using ElevenLegends.Data.Models;
+using ElevenLegends.Scenes.Components;
+using ElevenLegends.Simulation;
 using ElevenLegends.UI;
 
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Squad management — player list with HoverCards and animated detail panel.
+/// Squad management — football pitch with draggable player cards.
+/// Left: pitch view with formation. Right: bench/reserve list.
+/// Top: formation selector with OVR preview.
 /// </summary>
-public partial class SquadScreen : Control
+public partial class Squad : Control
 {
     private GameState _gameState = null!;
     private Club _playerClub = null!;
+    private PitchView _pitchView = null!;
+    private VBoxContainer _benchList = null!;
+    private VBoxContainer _benchPanel = null!;
+    private HBoxContainer _formationRow = null!;
+    private Formation _currentFormation = Formation.F442;
     private Player? _selectedPlayer;
 
     public override void _Ready()
     {
         _gameState = SceneManager.Instance.CurrentGameState!;
         _playerClub = _gameState.PlayerClub;
+        _currentFormation = Formation.F442;
         BuildUI();
     }
 
@@ -30,306 +40,399 @@ public partial class SquadScreen : Control
         var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
-        var root = new HBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.Padding,
-            OffsetBottom = -UITheme.Padding,
-        };
-        root.AddThemeConstantOverride("separation", UITheme.Padding);
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        root.OffsetLeft = UITheme.PaddingSmall;
+        root.OffsetRight = -UITheme.PaddingSmall;
+        root.OffsetTop = UITheme.PaddingSmall;
+        root.OffsetBottom = -UITheme.PaddingSmall;
+        root.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
         AddChild(root);
 
-        // ─── Left: player list ────────────────────────────────────
-        var leftPanel = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        leftPanel.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
-        root.AddChild(leftPanel);
+        // ─── Top bar: title + formation selector + back ──────────
+        var topBar = new HBoxContainer();
+        topBar.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        root.AddChild(topBar);
 
-        // Header row
-        var headerRow = new HBoxContainer();
-        headerRow.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
-        leftPanel.AddChild(headerRow);
-
-        headerRow.AddChild(UITheme.CreateLabel(
-            $"{_playerClub.Name} — Squad ({_playerClub.Team.Players.Count})",
-            UITheme.FontSizeHeading, UITheme.Blue));
+        topBar.AddChild(UITheme.CreateLabel(
+            $"{_playerClub.Name}", UITheme.FontSizeHeading, UITheme.Blue));
 
         var spacer = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        headerRow.AddChild(spacer);
+        topBar.AddChild(spacer);
 
         var backBtn = UITheme.CreateFlatButton("Back", UITheme.Border, UITheme.TextPrimary);
         backBtn.Pressed += () =>
             SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
-        headerRow.AddChild(backBtn);
+        topBar.AddChild(backBtn);
 
-        // Scrollable player list
-        var scroll = new ScrollContainer
+        // ─── Formation selector row ──────────────────────────────
+        _formationRow = new HBoxContainer();
+        _formationRow.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        _formationRow.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        root.AddChild(_formationRow);
+
+        BuildFormationButtons();
+
+        // ─── Main content: pitch + bench ─────────────────────────
+        var content = new HBoxContainer();
+        content.AddThemeConstantOverride("separation", UITheme.Padding);
+        content.SizeFlagsVertical = SizeFlags.ExpandFill;
+        root.AddChild(content);
+
+        // Pitch view (left, takes most space)
+        _pitchView = new PitchView
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(500, 400),
+        };
+        content.AddChild(_pitchView);
+
+        // Bench panel (right)
+        _benchPanel = new VBoxContainer
+        {
+            CustomMinimumSize = new Vector2(220, 0),
+        };
+        _benchPanel.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        content.AddChild(_benchPanel);
+
+        _benchPanel.AddChild(UITheme.CreateLabel("Bench",
+            UITheme.FontSizeBody, UITheme.TextSecondary));
+
+        var benchScroll = new ScrollContainer
         {
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            ClipContents = true,
         };
-        leftPanel.AddChild(scroll);
+        _benchPanel.AddChild(benchScroll);
 
-        var playerList = new VBoxContainer
+        _benchList = new VBoxContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        playerList.AddThemeConstantOverride("separation", 6);
-        scroll.AddChild(playerList);
+        _benchList.AddThemeConstantOverride("separation", 4);
+        benchScroll.AddChild(_benchList);
 
-        // Sorted by position
-        var sortedPlayers = _playerClub.Team.Players
-            .OrderBy(p => PositionOrder(p.PrimaryPosition))
-            .ThenByDescending(p => p.PrimaryPosition == PlayerPosition.GK
-                ? p.Attributes.GoalkeeperOverall
-                : p.Attributes.OutfieldOverall)
-            .ToList();
+        // Setup pitch with optimal lineup for current formation
+        IReadOnlyList<int> optimalIds = FormationOptimizer.OptimalLineup(
+            _playerClub.Team.Players, _currentFormation);
+        _pitchView.Setup(_playerClub.Team.Players, _currentFormation, optimalIds);
+        _pitchView.LineupChanged += RebuildBench;
+        _pitchView.PlayerClicked += OnPlayerClicked;
 
-        foreach (Player player in sortedPlayers)
+        RebuildBench();
+
+        // Entrance animation
+        Anim.FadeIn(_pitchView, delay: 0.1f, duration: 0.4f);
+    }
+
+    private void BuildFormationButtons()
+    {
+        foreach (Node child in _formationRow.GetChildren())
+            child.QueueFree();
+
+        foreach (Formation formation in Formation.Presets)
         {
-            var row = CreatePlayerRow(player);
-            playerList.AddChild(row);
-        }
+            float avgOvr = FormationOptimizer.AverageOverall(
+                _playerClub.Team.Players, formation);
 
-        // Stagger entrance
-        Anim.StaggerChildren(playerList, stagger: 0.03f, useScale: false);
+            bool isActive = formation.Name == _currentFormation.Name;
 
-        // ─── Right: player details ────────────────────────────────
-        if (_selectedPlayer != null)
-        {
-            var detailPanel = new VBoxContainer
+            var btn = new VBoxContainer();
+            btn.AddThemeConstantOverride("separation", 2);
+
+            Button formBtn;
+            if (isActive)
             {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new Vector2(380, 0),
-            };
-            detailPanel.AddThemeConstantOverride("separation", 8);
-            root.AddChild(detailPanel);
+                formBtn = UITheme.CreateButton(formation.Name, UITheme.Green, UITheme.TextLight);
+            }
+            else
+            {
+                formBtn = UITheme.CreateFlatButton(formation.Name, UITheme.Border, UITheme.TextPrimary);
+            }
+            formBtn.CustomMinimumSize = new Vector2(90, 36);
 
-            BuildPlayerDetails(detailPanel, _selectedPlayer);
-            Anim.FadeIn(detailPanel, delay: 0.1f);
+            Formation captured = formation;
+            formBtn.Pressed += () => OnFormationSelected(captured);
+            btn.AddChild(formBtn);
+
+            btn.AddChild(UITheme.CreateLabel($"OVR {avgOvr:F0}",
+                UITheme.FontSizeCaption, isActive ? UITheme.Green : UITheme.TextSecondary,
+                HorizontalAlignment.Center));
+
+            _formationRow.AddChild(btn);
         }
     }
 
-    // ─── Player row card ──────────────────────────────────────────────
-
-    private HoverCard CreatePlayerRow(Player player)
+    private void OnFormationSelected(Formation formation)
     {
-        bool isSelected = _selectedPlayer?.Id == player.Id;
-        var card = HoverCard.Create(isSelected ? UITheme.Blue : null);
-        card.DisableTilt = true; // Row cards — tilt feels wrong, just scale
-        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        card.CustomMinimumSize = new Vector2(0, 48);
+        _currentFormation = formation;
+        IReadOnlyList<int> optimalIds = FormationOptimizer.OptimalLineup(
+            _playerClub.Team.Players, _currentFormation);
+        _pitchView.SetFormation(_currentFormation, optimalIds);
 
-        if (isSelected)
+        BuildFormationButtons();
+        RebuildBench();
+    }
+
+    private void RebuildBench()
+    {
+        foreach (Node child in _benchList.GetChildren())
+            child.QueueFree();
+
+        IReadOnlyList<Player> bench = _pitchView.GetBenchPlayers();
+
+        foreach (Player player in bench.OrderBy(p => PositionOrder(p.PrimaryPosition)))
         {
-            // Highlight selected row with subtle bg tint
-            var style = new StyleBoxFlat
-            {
-                BgColor = UITheme.Blue.Lerp(UITheme.Card, 0.85f),
-                CornerRadiusTopLeft = UITheme.CardCornerRadius,
-                CornerRadiusTopRight = UITheme.CardCornerRadius,
-                CornerRadiusBottomLeft = UITheme.CardCornerRadius,
-                CornerRadiusBottomRight = UITheme.CardCornerRadius,
-                ContentMarginLeft = UITheme.Padding,
-                ContentMarginRight = UITheme.Padding,
-                ContentMarginTop = UITheme.PaddingSmall,
-                ContentMarginBottom = UITheme.PaddingSmall,
-                ShadowColor = UITheme.Shadow,
-                ShadowSize = 8,
-                ShadowOffset = new Vector2(0, 4),
-                BorderWidthLeft = 4,
-                BorderColor = UITheme.Blue,
-            };
-            card.AddThemeStyleboxOverride("panel", style);
+            var card = CreateBenchRow(player);
+            _benchList.AddChild(card);
         }
+    }
+
+    private HoverCard CreateBenchRow(Player player)
+    {
+        var card = HoverCard.Create();
+        card.DisableTilt = true;
+        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        card.CustomMinimumSize = new Vector2(0, 40);
 
         var hbox = new HBoxContainer();
         hbox.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
         card.AddChild(hbox);
 
-        // OVR badge
         float ovr = player.PrimaryPosition == PlayerPosition.GK
             ? player.Attributes.GoalkeeperOverall
             : player.Attributes.OutfieldOverall;
 
         var badge = UITheme.CreateBadge($"{ovr:F0}",
             UITheme.StatColor((int)ovr), UITheme.TextLight,
-            UITheme.FontSizeBody, new Vector2(40, 36));
+            UITheme.FontSizeCaption, new Vector2(32, 24));
         hbox.AddChild(badge);
 
-        // Position chip
         var posLabel = UITheme.CreateLabel($"{player.PrimaryPosition}",
             UITheme.FontSizeCaption, UITheme.TextSecondary);
-        posLabel.CustomMinimumSize = new Vector2(36, 0);
+        posLabel.CustomMinimumSize = new Vector2(28, 0);
         hbox.AddChild(posLabel);
 
-        // Name
         var nameLabel = UITheme.CreateLabel(player.Name,
-            UITheme.FontSizeBody, UITheme.TextDark);
+            UITheme.FontSizeSmall, UITheme.TextDark);
         nameLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         hbox.AddChild(nameLabel);
 
-        // Age
-        hbox.AddChild(UITheme.CreateLabel($"{player.Age}",
-            UITheme.FontSizeSmall, UITheme.TextSecondary));
-
-        // Morale bar
-        var moraleBar = UITheme.CreateProgressBar(player.Morale, 100,
-            player.Morale >= 70 ? UITheme.Green : player.Morale >= 40 ? UITheme.Yellow : UITheme.Red,
-            null, new Vector2(48, 8));
-        moraleBar.SizeFlagsVertical = SizeFlags.ShrinkCenter;
-        hbox.AddChild(moraleBar);
-
-        // Click overlay
-        var button = new Button
+        // Click to assign to first empty or worst-fit slot
+        Player capturedPlayer = player;
+        var clickBtn = new Button
         {
             Flat = true,
-            AnchorsPreset = (int)LayoutPreset.FullRect,
             Modulate = new Color(1, 1, 1, 0),
         };
-        Player capturedPlayer = player;
-        button.Pressed += () =>
-        {
-            _selectedPlayer = capturedPlayer;
-            BuildUI();
-        };
-        card.AddChild(button);
+        clickBtn.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        clickBtn.Pressed += () => OnBenchPlayerClicked(capturedPlayer);
+        card.AddChild(clickBtn);
 
         return card;
     }
 
-    // ─── Player detail panel ──────────────────────────────────────────
-
-    private void BuildPlayerDetails(VBoxContainer panel, Player player)
+    private void OnBenchPlayerClicked(Player player)
     {
-        float ovr = player.PrimaryPosition == PlayerPosition.GK
-            ? player.Attributes.GoalkeeperOverall
-            : player.Attributes.OutfieldOverall;
+        // Find best-fit slot for this player
+        int bestSlot = -1;
+        float bestDelta = float.MinValue;
 
-        // Header card with name and rating
-        var headerCard = UITheme.CreateCard(UITheme.RatingColor(ovr));
-        panel.AddChild(headerCard);
-
-        var headerVbox = new VBoxContainer();
-        headerVbox.AddThemeConstantOverride("separation", 6);
-        headerCard.AddChild(headerVbox);
-
-        headerVbox.AddChild(UITheme.CreateLabel(player.Name,
-            UITheme.FontSizeTitle, UITheme.TextDark, HorizontalAlignment.Center));
-
-        var infoRow = new HBoxContainer();
-        infoRow.AddThemeConstantOverride("separation", UITheme.Padding);
-        headerVbox.AddChild(infoRow);
-
-        infoRow.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-
-        var ovrBadge = UITheme.CreateBadge($"{ovr:F0}",
-            UITheme.RatingColor(ovr), UITheme.TextDark,
-            UITheme.FontSizeTitle, new Vector2(64, 64));
-        infoRow.AddChild(ovrBadge);
-
-        var infoVbox = new VBoxContainer();
-        infoVbox.AddThemeConstantOverride("separation", 2);
-        infoRow.AddChild(infoVbox);
-
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"{player.PrimaryPosition}", UITheme.FontSizeHeading, UITheme.TextDark));
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"Age {player.Age}", UITheme.FontSizeSmall, UITheme.TextSecondary));
-        infoVbox.AddChild(UITheme.CreateLabel(
-            $"Morale {player.Morale}%", UITheme.FontSizeSmall,
-            player.Morale >= 70 ? UITheme.Green : UITheme.Yellow));
-
-        infoRow.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-
-        // Attributes in a scrollable area
-        var scroll = new ScrollContainer
+        for (int i = 0; i < _currentFormation.Positions.Count; i++)
         {
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-        };
-        panel.AddChild(scroll);
+            Position slotPos = _currentFormation.Positions[i];
+            float playerOvr = player.Attributes.OverallForPosition(slotPos);
 
-        var attrVbox = new VBoxContainer();
-        attrVbox.AddThemeConstantOverride("separation", 6);
-        scroll.AddChild(attrVbox);
-
-        PlayerAttributes attrs = player.Attributes;
-
-        AddAttrSection(attrVbox, "Technical", UITheme.Blue, new (string, int)[]
-        {
-            ("Finishing", attrs.Finishing), ("Passing", attrs.Passing),
-            ("Dribbling", attrs.Dribbling), ("First Touch", attrs.FirstTouch),
-            ("Technique", attrs.Technique),
-        });
-
-        AddAttrSection(attrVbox, "Mental", UITheme.Yellow, new (string, int)[]
-        {
-            ("Decisions", attrs.Decisions), ("Composure", attrs.Composure),
-            ("Positioning", attrs.Positioning), ("Anticipation", attrs.Anticipation),
-            ("Off The Ball", attrs.OffTheBall),
-        });
-
-        AddAttrSection(attrVbox, "Physical", UITheme.Orange, new (string, int)[]
-        {
-            ("Speed", attrs.Speed), ("Acceleration", attrs.Acceleration),
-            ("Stamina", attrs.Stamina), ("Strength", attrs.Strength),
-            ("Agility", attrs.Agility),
-        });
-
-        if (player.PrimaryPosition == PlayerPosition.GK)
-        {
-            AddAttrSection(attrVbox, "Goalkeeper", UITheme.Purple, new (string, int)[]
+            int currentId = _pitchView.SlotPlayerIds[i];
+            float currentOvr = 0;
+            if (currentId > 0)
             {
-                ("Reflexes", attrs.Reflexes), ("Handling", attrs.Handling),
-                ("GK Positioning", attrs.GkPositioning), ("Aerial", attrs.Aerial),
-            });
+                Player? currentPlayer = _playerClub.Team.Players.FirstOrDefault(p => p.Id == currentId);
+                if (currentPlayer != null)
+                    currentOvr = currentPlayer.Attributes.OverallForPosition(slotPos);
+            }
+
+            float delta = playerOvr - currentOvr;
+
+            // Prefer matching position
+            if (player.PrimaryPosition == slotPos)
+                delta += 10;
+            else if (player.SecondaryPosition == slotPos)
+                delta += 5;
+
+            if (delta > bestDelta)
+            {
+                bestDelta = delta;
+                bestSlot = i;
+            }
         }
 
-        // Traits
-        if (player.Traits.Count > 0)
+        if (bestSlot >= 0)
         {
-            var traitCard = UITheme.CreateCard(UITheme.Purple);
-            attrVbox.AddChild(traitCard);
+            _pitchView.AssignPlayer(player.Id, bestSlot);
+            RebuildBench();
+        }
+    }
 
-            var traitVbox = new VBoxContainer();
-            traitVbox.AddThemeConstantOverride("separation", 4);
-            traitCard.AddChild(traitVbox);
-
-            traitVbox.AddChild(UITheme.CreateLabel("Traits",
-                UITheme.FontSizeBody, UITheme.Purple));
-            foreach (string trait in player.Traits)
+    // Also update the team's starting lineup when leaving
+    public override void _ExitTree()
+    {
+        if (_pitchView != null && _gameState != null)
+        {
+            List<int> newLineup = _pitchView.SlotPlayerIds
+                .Where(id => id > 0).ToList();
+            if (newLineup.Count == 11)
             {
-                traitVbox.AddChild(UITheme.CreateLabel(
-                    $"  ⚡ {trait}", UITheme.FontSizeSmall, UITheme.TextSecondary));
+                _playerClub.Team = _playerClub.Team with { StartingLineup = newLineup };
             }
         }
     }
 
-    private void AddAttrSection(VBoxContainer parent, string title, Color color,
+    private void OnPlayerClicked(int playerId)
+    {
+        _selectedPlayer = _playerClub.Team.Players.FirstOrDefault(p => p.Id == playerId);
+        if (_selectedPlayer == null) return;
+        ShowPlayerDetails();
+    }
+
+    private void ShowPlayerDetails()
+    {
+        if (_selectedPlayer == null || _benchPanel == null) return;
+
+        // Replace bench panel content with player details
+        foreach (Node child in _benchPanel.GetChildren())
+            child.QueueFree();
+
+        Player player = _selectedPlayer;
+        float ovr = player.PrimaryPosition == PlayerPosition.GK
+            ? player.Attributes.GoalkeeperOverall
+            : player.Attributes.OutfieldOverall;
+
+        // Back to bench button
+        var backBtn = UITheme.CreateFlatButton("Back to Bench", UITheme.Border, UITheme.TextPrimary);
+        backBtn.Pressed += () =>
+        {
+            _selectedPlayer = null;
+            RebuildBenchPanel();
+        };
+        _benchPanel.AddChild(backBtn);
+
+        // Player header
+        var headerCard = UITheme.CreateCard(UITheme.RatingColor(ovr));
+        _benchPanel.AddChild(headerCard);
+
+        var headerVbox = new VBoxContainer();
+        headerVbox.AddThemeConstantOverride("separation", 4);
+        headerCard.AddChild(headerVbox);
+
+        headerVbox.AddChild(UITheme.CreateLabel(player.Name,
+            UITheme.FontSizeHeading, UITheme.TextDark, HorizontalAlignment.Center));
+
+        var infoRow = new HBoxContainer();
+        infoRow.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        infoRow.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        headerVbox.AddChild(infoRow);
+
+        infoRow.AddChild(UITheme.CreateBadge($"{ovr:F0}",
+            UITheme.RatingColor(ovr), UITheme.TextDark,
+            UITheme.FontSizeHeading, new Vector2(48, 40)));
+
+        var infoVbox = new VBoxContainer();
+        infoVbox.AddThemeConstantOverride("separation", 2);
+        infoRow.AddChild(infoVbox);
+        infoVbox.AddChild(UITheme.CreateLabel($"{player.PrimaryPosition}",
+            UITheme.FontSizeBody, UITheme.TextDark));
+        infoVbox.AddChild(UITheme.CreateLabel($"Age {player.Age}",
+            UITheme.FontSizeCaption, UITheme.TextSecondary));
+        infoVbox.AddChild(UITheme.CreateLabel($"Morale {player.Morale}%",
+            UITheme.FontSizeCaption, player.Morale >= 70 ? UITheme.Green : UITheme.Yellow));
+
+        // Scrollable attributes
+        var attrScroll = new ScrollContainer
+        {
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            ClipContents = true,
+        };
+        _benchPanel.AddChild(attrScroll);
+
+        var attrVbox = new VBoxContainer();
+        attrVbox.AddThemeConstantOverride("separation", 4);
+        attrScroll.AddChild(attrVbox);
+
+        PlayerAttributes attrs = player.Attributes;
+
+        AddAttrSection(attrVbox, "Technical", UITheme.Blue,
+            [("FIN", attrs.Finishing), ("PAS", attrs.Passing), ("DRI", attrs.Dribbling),
+             ("1ST", attrs.FirstTouch), ("TEC", attrs.Technique)]);
+
+        AddAttrSection(attrVbox, "Mental", UITheme.Yellow,
+            [("DEC", attrs.Decisions), ("COM", attrs.Composure), ("POS", attrs.Positioning),
+             ("ANT", attrs.Anticipation), ("OTB", attrs.OffTheBall)]);
+
+        AddAttrSection(attrVbox, "Physical", UITheme.Orange,
+            [("SPD", attrs.Speed), ("ACC", attrs.Acceleration), ("STA", attrs.Stamina),
+             ("STR", attrs.Strength), ("AGI", attrs.Agility)]);
+
+        if (player.PrimaryPosition == PlayerPosition.GK)
+        {
+            AddAttrSection(attrVbox, "Goalkeeper", UITheme.Purple,
+                [("REF", attrs.Reflexes), ("HAN", attrs.Handling),
+                 ("GKP", attrs.GkPositioning), ("AER", attrs.Aerial)]);
+        }
+    }
+
+    private static void AddAttrSection(VBoxContainer parent, string title, Color color,
         (string label, int value)[] attrs)
     {
-        parent.AddChild(UITheme.CreateLabel(title, UITheme.FontSizeBody, color));
+        parent.AddChild(UITheme.CreateLabel(title, UITheme.FontSizeCaption, color));
 
         foreach ((string label, int value) in attrs)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 8);
+            row.AddThemeConstantOverride("separation", 4);
             parent.AddChild(row);
 
-            var lbl = UITheme.CreateLabel(label, UITheme.FontSizeSmall, UITheme.TextSecondary);
-            lbl.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            row.AddChild(lbl);
-
-            row.AddChild(UITheme.CreateLabel($"{value}",
-                UITheme.FontSizeSmall, UITheme.StatColor(value)));
+            row.AddChild(UITheme.CreateLabel(label, 11, UITheme.TextSecondary));
 
             var bar = UITheme.CreateProgressBar(value, 100,
-                UITheme.StatColor(value), null, new Vector2(100, 10));
+                UITheme.StatColor(value), null, new Vector2(60, 8));
+            bar.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             bar.SizeFlagsVertical = SizeFlags.ShrinkCenter;
             row.AddChild(bar);
+
+            row.AddChild(UITheme.CreateLabel($"{value}", 11, UITheme.StatColor(value)));
         }
+    }
+
+    private void RebuildBenchPanel()
+    {
+        if (_benchPanel == null) return;
+
+        foreach (Node child in _benchPanel.GetChildren())
+            child.QueueFree();
+
+        _benchPanel.AddChild(UITheme.CreateLabel("Bench",
+            UITheme.FontSizeBody, UITheme.TextSecondary));
+
+        var benchScroll = new ScrollContainer
+        {
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            ClipContents = true,
+        };
+        _benchPanel.AddChild(benchScroll);
+
+        _benchList = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        _benchList.AddThemeConstantOverride("separation", 4);
+        benchScroll.AddChild(_benchList);
+
+        RebuildBench();
     }
 
     private static int PositionOrder(PlayerPosition pos) => pos switch

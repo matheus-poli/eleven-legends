@@ -228,15 +228,58 @@ public static class UITheme
     }
 
     /// <summary>
+    /// Loads an SVG icon from assets/icons/ and returns a TextureRect.
+    /// Tint color is applied via SelfModulate (keeps original alpha).
+    /// </summary>
+    public static TextureRect CreateIcon(string iconName, Vector2? size = null, Color? tint = null)
+    {
+        Vector2 iconSize = size ?? new Vector2(24, 24);
+        Texture2D? tex = GD.Load<Texture2D>($"res://assets/icons/{iconName}.svg");
+
+        var icon = new TextureRect
+        {
+            Texture = tex,
+            CustomMinimumSize = iconSize,
+            ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            TextureFilter = CanvasItem.TextureFilterEnum.Linear,
+        };
+
+        if (tint.HasValue)
+        {
+            icon.SelfModulate = tint.Value;
+        }
+
+        return icon;
+    }
+
+    /// <summary>
+    /// Creates an HBox with an icon and label side by side.
+    /// </summary>
+    public static HBoxContainer CreateIconLabel(string iconName, string text,
+        int fontSize = FontSizeBody, Color? textColor = null, Vector2? iconSize = null,
+        Color? iconTint = null)
+    {
+        var hbox = new HBoxContainer();
+        hbox.AddThemeConstantOverride("separation", PaddingSmall);
+
+        hbox.AddChild(CreateIcon(iconName, iconSize ?? new Vector2(fontSize + 4, fontSize + 4), iconTint));
+
+        var label = CreateLabel(text, fontSize, textColor);
+        label.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        hbox.AddChild(label);
+
+        return hbox;
+    }
+
+    /// <summary>
     /// Solid color background filling the entire screen.
     /// </summary>
     public static ColorRect CreateBackground(Color color)
     {
-        return new ColorRect
-        {
-            Color = color,
-            AnchorsPreset = (int)Control.LayoutPreset.FullRect,
-        };
+        var rect = new ColorRect { Color = color };
+        rect.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        return rect;
     }
 
     /// <summary>
@@ -258,13 +301,14 @@ public static class UITheme
             Height = 256,
         };
 
-        return new TextureRect
+        var rect = new TextureRect
         {
             Texture = tex,
-            AnchorsPreset = (int)Control.LayoutPreset.FullRect,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.Scale,
         };
+        rect.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        return rect;
     }
 
     /// <summary>

@@ -10,7 +10,7 @@ namespace ElevenLegends.Scenes;
 /// <summary>
 /// Halftime screen — locker room card selection with HoverCard effects.
 /// </summary>
-public partial class HalftimeScreen : Control
+public partial class Halftime : Control
 {
     public static MatchState? PendingMatchState;
     public static MatchConfig? PendingConfig;
@@ -47,14 +47,8 @@ public partial class HalftimeScreen : Control
             UITheme.BlueDark, new Color("0F1B2D"));
         AddChild(bg);
 
-        var root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.PaddingLarge,
-            OffsetBottom = -UITheme.PaddingLarge,
-        };
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect, margin: UITheme.PaddingLarge);
         root.AddThemeConstantOverride("separation", UITheme.PaddingLarge);
         AddChild(root);
 
@@ -160,18 +154,19 @@ public partial class HalftimeScreen : Control
         vbox.AddThemeConstantOverride("separation", 10);
         hoverCard.AddChild(vbox);
 
-        string emoji = card.Effect switch
+        string cardIconName = card.Effect switch
         {
-            CardEffect.MoraleBoost => "💪",
-            CardEffect.StaminaRecovery => "⚡",
-            CardEffect.TeamBuff => "🔥",
-            CardEffect.OpponentDebuff => "❄️",
-            _ => "🎴",
+            CardEffect.MoraleBoost => "arrow-up",
+            CardEffect.StaminaRecovery => "lightning",
+            CardEffect.TeamBuff => "sword",
+            CardEffect.OpponentDebuff => "shield-check",
+            _ => "sparkle",
         };
 
-        // Emoji icon
-        vbox.AddChild(UITheme.CreateLabel(emoji, UITheme.FontSizeDisplay,
-            cardColor, HorizontalAlignment.Center));
+        // Card icon
+        var cardIcon = UITheme.CreateIcon(cardIconName, new Vector2(48, 48), cardColor);
+        cardIcon.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        vbox.AddChild(cardIcon);
 
         // Card name
         vbox.AddChild(UITheme.CreateLabel(card.Name,
@@ -191,9 +186,9 @@ public partial class HalftimeScreen : Control
         var btn = new Button
         {
             Flat = true,
-            AnchorsPreset = (int)LayoutPreset.FullRect,
             Modulate = new Color(1, 1, 1, 0),
         };
+        btn.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         LockerRoomCard captured = card;
         btn.Pressed += () =>
         {
@@ -217,8 +212,8 @@ public partial class HalftimeScreen : Control
         MatchResult result = MatchSimulator.SimulateSecondHalf(_matchState, _config,
             new SeededRng(_config.Seed + 200));
 
-        PostMatchScreen.PendingResult = result;
-        PostMatchScreen.PendingContext = _ctx;
+        PostMatch.PendingResult = result;
+        PostMatch.PendingContext = _ctx;
         SceneManager.Instance.ChangeScene("res://scenes/PostMatch.tscn");
     }
 }

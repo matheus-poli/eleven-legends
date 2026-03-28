@@ -30,11 +30,11 @@ public partial class SceneManager : Node
         _fadeOverlay = new ColorRect
         {
             Color = new Color(0, 0, 0, 1),
-            AnchorsPreset = (int)Control.LayoutPreset.FullRect,
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Modulate = new Color(1, 1, 1, 0), // Start transparent
         };
         canvas.AddChild(_fadeOverlay);
+        _fadeOverlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
         // Create animator
         _animator = new AnimationPlayer();

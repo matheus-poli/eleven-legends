@@ -27,14 +27,8 @@ public partial class ClubSelection : Control
         AddChild(bg);
 
         // ─── Root layout ──────────────────────────────────────────
-        var root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.PaddingLarge,
-            OffsetBottom = -UITheme.PaddingLarge,
-        };
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect, margin: UITheme.PaddingLarge);
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
@@ -56,6 +50,7 @@ public partial class ClubSelection : Control
         {
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            ClipContents = true,
         };
         root.AddChild(scroll);
 

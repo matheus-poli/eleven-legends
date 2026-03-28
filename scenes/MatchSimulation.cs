@@ -9,7 +9,7 @@ namespace ElevenLegends.Scenes;
 /// <summary>
 /// Match simulation screen — live event feed with score, possession, and animated events.
 /// </summary>
-public partial class MatchSimScreen : Control
+public partial class MatchSimulation : Control
 {
     public static MatchState? PendingMatchState;
     public static MatchConfig? PendingConfig;
@@ -47,14 +47,12 @@ public partial class MatchSimScreen : Control
         var bg = UITheme.CreateBackground(UITheme.Background);
         AddChild(bg);
 
-        var root = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-            OffsetLeft = UITheme.PaddingLarge,
-            OffsetRight = -UITheme.PaddingLarge,
-            OffsetTop = UITheme.Padding,
-            OffsetBottom = -UITheme.Padding,
-        };
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        root.OffsetLeft = UITheme.PaddingLarge;
+        root.OffsetRight = -UITheme.PaddingLarge;
+        root.OffsetTop = UITheme.Padding;
+        root.OffsetBottom = -UITheme.Padding;
         root.AddThemeConstantOverride("separation", UITheme.Padding);
         AddChild(root);
 
@@ -140,26 +138,26 @@ public partial class MatchSimScreen : Control
 
     private void OnHalftime()
     {
-        HalftimeScreen.PendingMatchState = _matchState;
-        HalftimeScreen.PendingConfig = _config;
-        HalftimeScreen.PendingContext = _ctx;
+        Halftime.PendingMatchState = _matchState;
+        Halftime.PendingConfig = _config;
+        Halftime.PendingContext = _ctx;
         SceneManager.Instance.ChangeScene("res://scenes/Halftime.tscn");
     }
 
     private void AddEventToFeed(MatchEvent evt)
     {
-        string emoji = evt.Type switch
+        string iconName = evt.Type switch
         {
-            EventType.Goal => "⚽",
-            EventType.Assist => "🅰️",
-            EventType.Shot => "🎯",
-            EventType.ShotOnTarget => "🥅",
-            EventType.Foul => "⚠️",
-            EventType.YellowCard => "🟡",
-            EventType.RedCard => "🔴",
-            EventType.Save => "🧤",
-            EventType.Substitution => "🔄",
-            _ => "📋",
+            EventType.Goal => "football",
+            EventType.Assist => "letter-a",
+            EventType.Shot => "target",
+            EventType.ShotOnTarget => "goal-net",
+            EventType.Foul => "alert-triangle",
+            EventType.YellowCard => "card-yellow",
+            EventType.RedCard => "card-red",
+            EventType.Save => "gloves",
+            EventType.Substitution => "arrow-swap",
+            _ => "clipboard",
         };
 
         bool isGoal = evt.Type == EventType.Goal;
@@ -171,10 +169,15 @@ public partial class MatchSimScreen : Control
             goalCard.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             _eventFeed.AddChild(goalCard);
 
-            var goalLabel = UITheme.CreateLabel(
-                $"{evt.Tick}'  {emoji}  {evt.Description}",
-                UITheme.FontSizeBody, UITheme.Green, HorizontalAlignment.Center);
-            goalCard.AddChild(goalLabel);
+            var goalRow = new HBoxContainer();
+            goalRow.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+            goalRow.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            goalCard.AddChild(goalRow);
+
+            goalRow.AddChild(UITheme.CreateIcon(iconName, new Vector2(20, 20)));
+            goalRow.AddChild(UITheme.CreateLabel(
+                $"{evt.Tick}'  {evt.Description}",
+                UITheme.FontSizeBody, UITheme.Green));
 
             Anim.PulseOnce(goalCard, 1.05f);
         }
@@ -187,10 +190,14 @@ public partial class MatchSimScreen : Control
                 _ => UITheme.TextSecondary,
             };
 
-            var label = UITheme.CreateLabel(
-                $"  {evt.Tick}'  {emoji}  {evt.Description}",
-                UITheme.FontSizeSmall, color);
-            _eventFeed.AddChild(label);
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+            _eventFeed.AddChild(row);
+
+            row.AddChild(UITheme.CreateIcon(iconName, new Vector2(16, 16), color));
+            row.AddChild(UITheme.CreateLabel(
+                $"{evt.Tick}'  {evt.Description}",
+                UITheme.FontSizeSmall, color));
         }
     }
 
