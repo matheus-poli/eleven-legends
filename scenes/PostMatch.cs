@@ -172,12 +172,17 @@ public partial class PostMatch : Control
         if (svp != null && svp.Id != (mvp?.Id ?? 0))
         {
             float svpRating = _result.FinalState.PlayerRatings.GetValueOrDefault(svp.Id, 6f);
-            var svpRow = new HBoxContainer();
-            svpRow.AddThemeConstantOverride("separation", 4);
-            sideContent.AddChild(svpRow);
-            svpRow.AddChild(UITheme.CreateLabel("2nd:", UITheme.FontSizeCaption, UITheme.Blue));
-            svpRow.AddChild(UITheme.CreateLabel(svp.Name, UITheme.FontSizeSmall, UITheme.TextDark));
-            svpRow.AddChild(UITheme.CreateLabel($"{svpRating:F1}", UITheme.FontSizeSmall, UITheme.Blue));
+            var svpCard = UITheme.CreateCard(UITheme.Blue);
+            sideContent.AddChild(svpCard);
+            var svpVbox = new VBoxContainer();
+            svpVbox.AddThemeConstantOverride("separation", 2);
+            svpCard.AddChild(svpVbox);
+            svpVbox.AddChild(UITheme.CreateLabel("2nd Best",
+                UITheme.FontSizeCaption, UITheme.Blue, HorizontalAlignment.Center));
+            svpVbox.AddChild(UITheme.CreateLabel(svp.Name,
+                UITheme.FontSizeSmall, UITheme.TextDark, HorizontalAlignment.Center));
+            svpVbox.AddChild(UITheme.CreateLabel($"Rating: {svpRating:F1}",
+                UITheme.FontSizeCaption, UITheme.Blue, HorizontalAlignment.Center));
         }
 
         // Money and morale

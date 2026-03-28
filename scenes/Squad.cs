@@ -76,6 +76,11 @@ public partial class Squad : Control
 
         BuildFormationButtons();
 
+        // Auto lineup button
+        var autoBtn = UITheme.CreateFlatButton("Auto Best OVR", UITheme.Orange, UITheme.TextLight);
+        autoBtn.Pressed += OnAutoLineup;
+        _formationRow.AddChild(autoBtn);
+
         // ─── Main content: pitch + bench ─────────────────────────
         var content = new HBoxContainer();
         content.AddThemeConstantOverride("separation", UITheme.Padding);
@@ -168,6 +173,14 @@ public partial class Squad : Control
 
             _formationRow.AddChild(btn);
         }
+    }
+
+    private void OnAutoLineup()
+    {
+        IReadOnlyList<int> optimalIds = FormationOptimizer.OptimalLineup(
+            _playerClub.Team.Players, _currentFormation);
+        _pitchView.SetFormation(_currentFormation, optimalIds);
+        RebuildBench();
     }
 
     private void OnFormationSelected(Formation formation)
@@ -408,9 +421,9 @@ public partial class Squad : Control
         infoRow.AddChild(infoVbox);
         infoVbox.AddChild(UITheme.CreateLabel($"{player.PrimaryPosition}",
             UITheme.FontSizeBody, UITheme.TextDark));
-        infoVbox.AddChild(UITheme.CreateLabel($"Age {player.Age}",
+        infoVbox.AddChild(UITheme.CreateLabel($"Age {player.Age}  |  {_playerClub.Country}",
             UITheme.FontSizeCaption, UITheme.TextSecondary));
-        infoVbox.AddChild(UITheme.CreateLabel($"Morale {player.Morale}%",
+        infoVbox.AddChild(UITheme.CreateLabel($"Morale {player.Morale}%  |  Chemistry {player.Chemistry}%",
             UITheme.FontSizeCaption, player.Morale >= 70 ? UITheme.Green : UITheme.Yellow));
 
         // Scrollable attributes

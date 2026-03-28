@@ -147,7 +147,7 @@ public partial class MatchPitchView : Control
         Vector2 pitchSize = Size;
         if (pitchSize.X < 10 || pitchSize.Y < 10) return;
 
-        Vector2 cardSize = new(58, 68);
+        Vector2 cardSize = new(86, 80);
 
         // Home team (bottom half — Y coordinates as-is from FormationLayout)
         PlaceTeamCards(_homePlayerIds, _homeFormation, _config.HomeTeam,
@@ -189,24 +189,24 @@ public partial class MatchPitchView : Control
     private Control CreateMatchCard(Player player, Color tint)
     {
         var panel = new PanelContainer();
-        panel.CustomMinimumSize = new Vector2(58, 68);
+        panel.CustomMinimumSize = new Vector2(86, 80);
 
         var style = new StyleBoxFlat
         {
             BgColor = tint,
-            CornerRadiusTopLeft = 8,
-            CornerRadiusTopRight = 8,
-            CornerRadiusBottomLeft = 8,
-            CornerRadiusBottomRight = 8,
-            ContentMarginLeft = 2,
-            ContentMarginRight = 2,
-            ContentMarginTop = 2,
-            ContentMarginBottom = 2,
+            CornerRadiusTopLeft = 10,
+            CornerRadiusTopRight = 10,
+            CornerRadiusBottomLeft = 10,
+            CornerRadiusBottomRight = 10,
+            ContentMarginLeft = 4,
+            ContentMarginRight = 4,
+            ContentMarginTop = 3,
+            ContentMarginBottom = 3,
         };
         panel.AddThemeStyleboxOverride("panel", style);
 
         var vbox = new VBoxContainer();
-        vbox.AddThemeConstantOverride("separation", 1);
+        vbox.AddThemeConstantOverride("separation", 2);
         panel.AddChild(vbox);
 
         // Rating badge
@@ -217,14 +217,14 @@ public partial class MatchPitchView : Control
         var badgeStyle = new StyleBoxFlat
         {
             BgColor = ratingColor,
-            CornerRadiusTopLeft = 6,
-            CornerRadiusTopRight = 6,
-            CornerRadiusBottomLeft = 6,
-            CornerRadiusBottomRight = 6,
-            ContentMarginLeft = 3,
-            ContentMarginRight = 3,
-            ContentMarginTop = 1,
-            ContentMarginBottom = 1,
+            CornerRadiusTopLeft = 8,
+            CornerRadiusTopRight = 8,
+            CornerRadiusBottomLeft = 8,
+            CornerRadiusBottomRight = 8,
+            ContentMarginLeft = 6,
+            ContentMarginRight = 6,
+            ContentMarginTop = 2,
+            ContentMarginBottom = 2,
         };
         ratingBadge.AddThemeStyleboxOverride("panel", badgeStyle);
         ratingBadge.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
@@ -234,26 +234,26 @@ public partial class MatchPitchView : Control
             Text = $"{rating:F1}",
             HorizontalAlignment = HorizontalAlignment.Center,
         };
-        ratingLabel.AddThemeFontSizeOverride("font_size", 11);
+        ratingLabel.AddThemeFontSizeOverride("font_size", UITheme.FontSizeSmall);
         ratingLabel.AddThemeColorOverride("font_color", UITheme.White);
         ratingBadge.AddChild(ratingLabel);
         vbox.AddChild(ratingBadge);
 
-        // Track for live updates
         _ratingLabels[player.Id] = ratingLabel;
         _ratingBadges[player.Id] = ratingBadge;
 
-        // Player name (truncated)
-        string displayName = player.Name.Length > 8
-            ? player.Name[..7] + "."
+        // Player name
+        string displayName = player.Name.Length > 10
+            ? player.Name[..9] + "."
             : player.Name;
-        var nameLabel = UITheme.CreateLabel(displayName, 9, UITheme.TextDark, HorizontalAlignment.Center);
+        var nameLabel = UITheme.CreateLabel(displayName,
+            UITheme.FontSizeCaption, UITheme.TextDark, HorizontalAlignment.Center);
         nameLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         vbox.AddChild(nameLabel);
 
         // Position
-        var posLabel = UITheme.CreateLabel($"{player.PrimaryPosition}", 8,
-            UITheme.TextSecondary, HorizontalAlignment.Center);
+        var posLabel = UITheme.CreateLabel($"{player.PrimaryPosition}",
+            UITheme.FontSizeCaption - 1, UITheme.TextSecondary, HorizontalAlignment.Center);
         posLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         vbox.AddChild(posLabel);
 

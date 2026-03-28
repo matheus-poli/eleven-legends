@@ -204,7 +204,7 @@ public partial class PitchView : Control
 
         IReadOnlyList<Vector2> positions = GetPitchPositions(_formation);
         Vector2 pitchSize = Size;
-        Vector2 cardSize = new(76, 90);
+        Vector2 cardSize = new(100, 100);
 
         for (int i = 0; i < _formation.Positions.Count; i++)
         {
@@ -225,12 +225,11 @@ public partial class PitchView : Control
     private Control CreateSlotCard(int playerId, Position slotPos, int slotIndex)
     {
         var panel = new PanelContainer();
-        panel.CustomMinimumSize = new Vector2(76, 90);
+        panel.CustomMinimumSize = new Vector2(100, 100);
 
         bool hasPlayer = playerId > 0 && _playerMap.ContainsKey(playerId);
         Player? player = hasPlayer ? _playerMap[playerId] : null;
 
-        // Card background
         Color cardBg = hasPlayer ? new Color("FFFFFFEE") : new Color("FFFFFF44");
         bool outOfPosition = hasPlayer && player!.PrimaryPosition != slotPos
             && player.SecondaryPosition != slotPos;
@@ -241,15 +240,15 @@ public partial class PitchView : Control
         var style = new StyleBoxFlat
         {
             BgColor = cardBg,
-            CornerRadiusTopLeft = 10,
-            CornerRadiusTopRight = 10,
-            CornerRadiusBottomLeft = 10,
-            CornerRadiusBottomRight = 10,
-            ContentMarginLeft = 4,
-            ContentMarginRight = 4,
+            CornerRadiusTopLeft = 12,
+            CornerRadiusTopRight = 12,
+            CornerRadiusBottomLeft = 12,
+            CornerRadiusBottomRight = 12,
+            ContentMarginLeft = 6,
+            ContentMarginRight = 6,
             ContentMarginTop = 4,
             ContentMarginBottom = 4,
-            BorderWidthTop = 2,
+            BorderWidthTop = 3,
             BorderColor = borderColor,
         };
         panel.AddThemeStyleboxOverride("panel", style);
@@ -265,24 +264,24 @@ public partial class PitchView : Control
             // OVR badge
             var ovrBadge = UITheme.CreateBadge($"{ovr:F0}",
                 UITheme.RatingColor(ovr), UITheme.TextDark,
-                UITheme.FontSizeSmall, new Vector2(32, 24));
+                UITheme.FontSizeBody, new Vector2(40, 30));
             ovrBadge.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             vbox.AddChild(ovrBadge);
 
-            // Name (truncated)
-            string displayName = player.Name.Length > 10
-                ? player.Name[..9] + "."
+            // Name
+            string displayName = player.Name.Length > 11
+                ? player.Name[..10] + "."
                 : player.Name;
             var nameLabel = UITheme.CreateLabel(displayName,
-                UITheme.FontSizeCaption, UITheme.TextDark, HorizontalAlignment.Center);
+                UITheme.FontSizeSmall, UITheme.TextDark, HorizontalAlignment.Center);
             nameLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             vbox.AddChild(nameLabel);
 
-            // Position label
-            string posText = outOfPosition ? $"{player.PrimaryPosition} -> {slotPos}" : $"{slotPos}";
+            // Position
+            string posText = outOfPosition ? $"{player.PrimaryPosition}->{slotPos}" : $"{slotPos}";
             Color posColor = outOfPosition ? UITheme.Red : UITheme.TextSecondary;
             var posLabel = UITheme.CreateLabel(posText,
-                10, posColor, HorizontalAlignment.Center);
+                UITheme.FontSizeCaption, posColor, HorizontalAlignment.Center);
             posLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             vbox.AddChild(posLabel);
         }
