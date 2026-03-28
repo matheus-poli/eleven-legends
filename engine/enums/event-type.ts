@@ -1,0 +1,15 @@
+export enum EventType {
+  Goal = "Goal",
+  Assist = "Assist",
+  Shot = "Shot",
+  ShotOnTarget = "ShotOnTarget",
+  Foul = "Foul",
+  YellowCard = "YellowCard",
+  RedCard = "RedCard",
+  Corner = "Corner",
+  FreeKick = "FreeKick",
+  Substitution = "Substitution",
+  Injury = "Injury",
+  Save = "Save",
+  Offside = "Offside",
+}
