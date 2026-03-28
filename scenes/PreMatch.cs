@@ -248,9 +248,8 @@ public partial class PreMatch : Control
         };
 
         MatchConfig config = _gameState.BuildPlayerMatchConfig(_ctx, tactics);
-        (MatchState state, _) = MatchSimulator.SimulateFirstHalf(config);
 
-        MatchSimulation.PendingMatchState = state;
+        // Pass config directly — MatchSimulation now uses LiveMatchSession
         MatchSimulation.PendingConfig = config;
         MatchSimulation.PendingContext = _ctx;
 

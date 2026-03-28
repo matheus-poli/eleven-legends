@@ -209,11 +209,24 @@ public partial class Halftime : Control
             HalftimeProcessor.ApplyCard(_matchState, _config, _selectedCard, isHome);
         }
 
-        MatchResult result = MatchSimulator.SimulateSecondHalf(_matchState, _config,
-            new SeededRng(_config.Seed + 200));
-
-        PostMatch.PendingResult = result;
-        PostMatch.PendingContext = _ctx;
-        SceneManager.Instance.ChangeScene("res://scenes/PostMatch.tscn");
+        // If we have a live session, continue it for the second half
+        LiveMatchSession? session = MatchSimulation.PendingSession;
+        if (session != null)
+        {
+            session.StartSecondHalf();
+            MatchSimulation.PendingSession = session;
+            MatchSimulation.PendingConfig = _config;
+            MatchSimulation.PendingContext = _ctx;
+            SceneManager.Instance.ChangeScene("res://scenes/MatchSimulation.tscn");
+        }
+        else
+        {
+            // Fallback: simulate second half instantly (for AI matches)
+            MatchResult result = MatchSimulator.SimulateSecondHalf(_matchState, _config,
+                new Simulation.SeededRng(_config.Seed + 200));
+            PostMatch.PendingResult = result;
+            PostMatch.PendingContext = _ctx;
+            SceneManager.Instance.ChangeScene("res://scenes/PostMatch.tscn");
+        }
     }
 }
