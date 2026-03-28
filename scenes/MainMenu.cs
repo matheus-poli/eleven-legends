@@ -1,7 +1,4 @@
 using Godot;
-using ElevenLegends.Data.Generators;
-using ElevenLegends.Data.Models;
-using ElevenLegends.Persistence;
 using ElevenLegends.UI;
 
 namespace ElevenLegends.Scenes;
@@ -12,13 +9,8 @@ namespace ElevenLegends.Scenes;
 /// </summary>
 public partial class MainMenu : Control
 {
-    private SaveManager _saveManager = null!;
-
     public override void _Ready()
     {
-        _saveManager = new SaveManager(
-            System.IO.Path.Combine(OS.GetUserDataDir(), "saves"));
-
         BuildUI();
     }
 
@@ -29,18 +21,16 @@ public partial class MainMenu : Control
         AddChild(bg);
 
         // ─── Center container ─────────────────────────────────────
-        var center = new VBoxContainer
-        {
-            AnchorsPreset = (int)LayoutPreset.Center,
-            GrowHorizontal = GrowDirection.Both,
-            GrowVertical = GrowDirection.Both,
-        };
+        var centerWrapper = new CenterContainer();
+        centerWrapper.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(centerWrapper);
+
+        var center = new VBoxContainer();
         center.AddThemeConstantOverride("separation", 12);
-        AddChild(center);
+        centerWrapper.AddChild(center);
 
         // ─── Floating football icon ───────────────────────────────
-        var iconLabel = UITheme.CreateLabel("⚽", UITheme.FontSizeDisplay + 24,
-            UITheme.White, HorizontalAlignment.Center);
+        var iconLabel = UITheme.CreateIcon("football", new Vector2(72, 72));
         iconLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         center.AddChild(iconLabel);
 
@@ -51,7 +41,7 @@ public partial class MainMenu : Control
         center.AddChild(title);
 
         // ─── Subtitle ─────────────────────────────────────────────
-        var subtitle = UITheme.CreateLabel("Football Manager + Gacha",
+        var subtitle = UITheme.CreateLabel("Football Manager",
             UITheme.FontSizeBody, new Color(1, 1, 1, 0.7f), HorizontalAlignment.Center);
         subtitle.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         center.AddChild(subtitle);
@@ -66,15 +56,13 @@ public partial class MainMenu : Control
         newGameBtn.Pressed += OnNewGame;
         center.AddChild(newGameBtn);
 
-        // ─── Continue button (blue — secondary action) ────────────
-        if (_saveManager.HasAutoSave())
-        {
-            var continueBtn = UITheme.CreateButton("Continue", UITheme.Blue);
-            continueBtn.CustomMinimumSize = new Vector2(280, 60);
-            continueBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-            continueBtn.Pressed += OnContinue;
-            center.AddChild(continueBtn);
-        }
+        // ─── Online button (disabled — future feature) ────────────
+        var onlineBtn = UITheme.CreateButton("Online", UITheme.Blue);
+        onlineBtn.CustomMinimumSize = new Vector2(280, 60);
+        onlineBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        onlineBtn.Disabled = true;
+        onlineBtn.Modulate = new Color(1, 1, 1, 0.5f);
+        center.AddChild(onlineBtn);
 
         // ─── Version text ─────────────────────────────────────────
         center.AddChild(new Control { CustomMinimumSize = new Vector2(0, 16) });
@@ -82,9 +70,6 @@ public partial class MainMenu : Control
             UITheme.FontSizeCaption, new Color(1, 1, 1, 0.4f), HorizontalAlignment.Center);
         version.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         center.AddChild(version);
-
-        // Ensure children are centered in VBox
-        center.SetAnchorsPreset(LayoutPreset.Center);
 
         // ─── Entrance animations (deferred to after layout) ───────
         PlayEntranceAnimations(iconLabel, title, subtitle, newGameBtn);
@@ -146,17 +131,4 @@ public partial class MainMenu : Control
         SceneManager.Instance.ChangeScene("res://scenes/ClubSelection.tscn");
     }
 
-    private void OnContinue()
-    {
-        try
-        {
-            GameState gameState = _saveManager.LoadGame("autosave");
-            SceneManager.Instance.CurrentGameState = gameState;
-            SceneManager.Instance.ChangeScene("res://scenes/DayHub.tscn");
-        }
-        catch (System.Exception ex)
-        {
-            GD.PrintErr($"Failed to load save: {ex.Message}");
-        }
-    }
 }
