@@ -2,13 +2,14 @@ using Godot;
 using ElevenLegends.Data.Enums;
 using ElevenLegends.Data.Models;
 using ElevenLegends.Persistence;
+using ElevenLegends.Scenes.Components;
 using ElevenLegends.Simulation;
 using ElevenLegends.UI;
 
 namespace ElevenLegends.Scenes;
 
 /// <summary>
-/// Post-match screen — result, MVP, ratings with celebration animations.
+/// Post-match screen — pitch view with final ratings + results sidebar.
 /// </summary>
 public partial class PostMatch : Control
 {
@@ -30,7 +31,12 @@ public partial class PostMatch : Control
         PendingResult = null;
         PendingContext = null;
 
+        // Snapshot balance before processing
+        decimal balanceBefore = _playerClub.Balance;
+
         DayResult dayResult = _gameState.FinishDay(_ctx, _result);
+
+        decimal moneyGained = _playerClub.Balance - balanceBefore;
 
         try
         {
@@ -39,10 +45,10 @@ public partial class PostMatch : Control
         }
         catch { /* silent */ }
 
-        BuildUI(dayResult);
+        BuildUI(dayResult, moneyGained);
     }
 
-    private void BuildUI(DayResult dayResult)
+    private void BuildUI(DayResult dayResult, decimal moneyGained)
     {
         bool isHome = _ctx.PlayerFixture!.HomeClubId == _playerClub.Id;
         int playerGoals = isHome ? _result.ScoreHome : _result.ScoreAway;
@@ -50,160 +56,171 @@ public partial class PostMatch : Control
         bool won = playerGoals > opponentGoals;
         bool draw = playerGoals == opponentGoals;
 
-        // ─── Background based on result ───────────────────────────
+        // Background
         if (won)
-        {
             AddChild(UITheme.CreateGradientBackground(UITheme.Green, UITheme.GreenDark));
-        }
         else if (draw)
-        {
             AddChild(UITheme.CreateGradientBackground(UITheme.Yellow, UITheme.YellowDark));
-        }
         else
-        {
-            AddChild(UITheme.CreateGradientBackground(
-                new Color("4B4B4B"), new Color("2A2A2A")));
-        }
+            AddChild(UITheme.CreateGradientBackground(new Color("4B4B4B"), new Color("2A2A2A")));
 
         var root = new VBoxContainer();
-        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect, margin: UITheme.PaddingLarge);
-        root.AddThemeConstantOverride("separation", UITheme.Padding);
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        root.OffsetLeft = UITheme.PaddingSmall;
+        root.OffsetRight = -UITheme.PaddingSmall;
+        root.OffsetTop = UITheme.PaddingSmall;
+        root.OffsetBottom = -UITheme.PaddingSmall;
+        root.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
         AddChild(root);
 
-        // ─── Result header ────────────────────────────────────────
+        // ─── Score header ─────────────────────────────────────────
         string resultText = won ? "VICTORY!" : (draw ? "DRAW" : "DEFEAT");
         string resultIcon = won ? "confetti" : (draw ? "handshake" : "sad-face");
 
-        var resultLabel = UITheme.CreateIcon(resultIcon, new Vector2(64, 64));
-        resultLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        root.AddChild(resultLabel);
+        var headerRow = new HBoxContainer();
+        headerRow.AddThemeConstantOverride("separation", UITheme.Padding);
+        headerRow.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        root.AddChild(headerRow);
 
-        root.AddChild(UITheme.CreateLabel(resultText,
-            UITheme.FontSizeDisplay, UITheme.TextLight, HorizontalAlignment.Center));
-
-        // Score
-        root.AddChild(UITheme.CreateLabel(
+        headerRow.AddChild(UITheme.CreateIcon(resultIcon, new Vector2(36, 36)));
+        headerRow.AddChild(UITheme.CreateLabel(resultText, UITheme.FontSizeTitle, UITheme.TextLight));
+        headerRow.AddChild(UITheme.CreateLabel(
             $"{_result.FinalState.ScoreHome} - {_result.FinalState.ScoreAway}",
-            UITheme.FontSizeDisplay, UITheme.TextLight, HorizontalAlignment.Center));
+            UITheme.FontSizeTitle, UITheme.TextLight));
 
         Club homeClub = _gameState.Clubs.First(c => c.Id == _ctx.PlayerFixture.HomeClubId);
         Club awayClub = _gameState.Clubs.First(c => c.Id == _ctx.PlayerFixture.AwayClubId);
 
         root.AddChild(UITheme.CreateLabel(
             $"{homeClub.Name} vs {awayClub.Name}",
-            UITheme.FontSizeBody, new Color(1, 1, 1, 0.7f), HorizontalAlignment.Center));
+            UITheme.FontSizeSmall, new Color(1, 1, 1, 0.6f), HorizontalAlignment.Center));
 
-        // ─── Scrollable content area ─────────────────────────────
-        var scroll = new ScrollContainer
+        // ─── Main content: pitch + sidebar ────────────────────────
+        var content = new HBoxContainer();
+        content.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        content.SizeFlagsVertical = SizeFlags.ExpandFill;
+        root.AddChild(content);
+
+        // Left: pitch with final ratings
+        var pitchView = new MatchPitchView
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            SizeFlagsStretchRatio = 1.6f,
+        };
+        content.AddChild(pitchView);
+
+        // Build config for pitch view from result data
+        MatchConfig matchConfig = _gameState.BuildPlayerMatchConfig(_ctx, null);
+        Formation homeForm = _result.FinalState.Phase != MatchPhase.Finished
+            ? Formation.F442
+            : (matchConfig.HomeTactics?.Formation ?? Formation.F442);
+        Formation awayForm = matchConfig.AwayTactics?.Formation ?? Formation.F442;
+
+        pitchView.Setup(matchConfig, homeForm, awayForm);
+        pitchView.UpdateRatings(_result.FinalState.PlayerRatings);
+
+        // Right: results sidebar
+        var sidebar = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsStretchRatio = 1.0f,
+        };
+        sidebar.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        content.AddChild(sidebar);
+
+        var sideScroll = new ScrollContainer
         {
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
             ClipContents = true,
         };
-        root.AddChild(scroll);
+        sidebar.AddChild(sideScroll);
 
-        var scrollContent = new VBoxContainer
+        var sideContent = new VBoxContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        scrollContent.AddThemeConstantOverride("separation", UITheme.Padding);
-        scroll.AddChild(scrollContent);
+        sideContent.AddThemeConstantOverride("separation", UITheme.PaddingSmall);
+        sideScroll.AddChild(sideContent);
 
-        // ─── MVP card ─────────────────────────────────────────────
-        var allPlayers = _playerClub.Team.Players
-            .Concat(_gameState.Clubs
-                .Where(c => c.Id != _playerClub.Id &&
-                    (c.Id == _ctx.PlayerFixture.HomeClubId || c.Id == _ctx.PlayerFixture.AwayClubId))
-                .SelectMany(c => c.Team.Players));
-
+        // MVP
+        var allPlayers = homeClub.Team.Players.Concat(awayClub.Team.Players);
         Player? mvp = allPlayers.FirstOrDefault(p => p.Id == _result.MvpPlayerId);
         if (mvp != null)
         {
+            float mvpRating = _result.FinalState.PlayerRatings.GetValueOrDefault(mvp.Id, 6f);
             var mvpCard = UITheme.CreateCard(UITheme.Yellow);
-            scrollContent.AddChild(mvpCard);
+            sideContent.AddChild(mvpCard);
 
             var mvpVbox = new VBoxContainer();
-            mvpVbox.AddThemeConstantOverride("separation", 4);
+            mvpVbox.AddThemeConstantOverride("separation", 2);
             mvpCard.AddChild(mvpVbox);
 
             var mvpTitle = UITheme.CreateIconLabel("sparkle", "Man of the Match",
-                UITheme.FontSizeSmall, UITheme.Yellow);
+                UITheme.FontSizeCaption, UITheme.Yellow);
             mvpTitle.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             mvpVbox.AddChild(mvpTitle);
             mvpVbox.AddChild(UITheme.CreateLabel(mvp.Name,
-                UITheme.FontSizeHeading, UITheme.TextDark, HorizontalAlignment.Center));
-
-            if (_result.FinalState.PlayerRatings.TryGetValue(mvp.Id, out float rating))
-            {
-                mvpVbox.AddChild(UITheme.CreateLabel($"Rating: {rating:F1}",
-                    UITheme.FontSizeBody, UITheme.Green, HorizontalAlignment.Center));
-            }
+                UITheme.FontSizeBody, UITheme.TextDark, HorizontalAlignment.Center));
+            mvpVbox.AddChild(UITheme.CreateLabel($"Rating: {mvpRating:F1}",
+                UITheme.FontSizeSmall, UITheme.Green, HorizontalAlignment.Center));
         }
 
-        // ─── SVP card ─────────────────────────────────────────────
+        // SVP
         Player? svp = allPlayers.FirstOrDefault(p => p.Id == _result.SvpPlayerId);
         if (svp != null && svp.Id != (mvp?.Id ?? 0))
         {
-            var svpCard = UITheme.CreateCard(UITheme.Blue);
-            scrollContent.AddChild(svpCard);
-
-            var svpVbox = new VBoxContainer();
-            svpVbox.AddThemeConstantOverride("separation", 4);
-            svpCard.AddChild(svpVbox);
-
-            svpVbox.AddChild(UITheme.CreateLabel("Second Best",
-                UITheme.FontSizeSmall, UITheme.Blue, HorizontalAlignment.Center));
-            svpVbox.AddChild(UITheme.CreateLabel(svp.Name,
-                UITheme.FontSizeBody, UITheme.TextDark, HorizontalAlignment.Center));
-
-            if (_result.FinalState.PlayerRatings.TryGetValue(svp.Id, out float svpRating))
-            {
-                svpVbox.AddChild(UITheme.CreateLabel($"Rating: {svpRating:F1}",
-                    UITheme.FontSizeSmall, UITheme.Blue, HorizontalAlignment.Center));
-            }
+            float svpRating = _result.FinalState.PlayerRatings.GetValueOrDefault(svp.Id, 6f);
+            var svpRow = new HBoxContainer();
+            svpRow.AddThemeConstantOverride("separation", 4);
+            sideContent.AddChild(svpRow);
+            svpRow.AddChild(UITheme.CreateLabel("2nd:", UITheme.FontSizeCaption, UITheme.Blue));
+            svpRow.AddChild(UITheme.CreateLabel(svp.Name, UITheme.FontSizeSmall, UITheme.TextDark));
+            svpRow.AddChild(UITheme.CreateLabel($"{svpRating:F1}", UITheme.FontSizeSmall, UITheme.Blue));
         }
 
-        // ─── Goals summary ────────────────────────────────────────
+        // Money and morale
+        if (moneyGained != 0)
+        {
+            Color moneyColor = moneyGained > 0 ? UITheme.Green : UITheme.Red;
+            string sign = moneyGained > 0 ? "+" : "";
+            sideContent.AddChild(UITheme.CreateIconLabel("coin",
+                $"{sign}{FormatMoney(moneyGained)}", UITheme.FontSizeSmall, moneyColor));
+        }
+
+        // Goals
         var goals = _result.Events.Where(e => e.Type == EventType.Goal).ToList();
         if (goals.Count > 0)
         {
             var goalCard = UITheme.CreateCard(UITheme.Green);
-            scrollContent.AddChild(goalCard);
-
+            sideContent.AddChild(goalCard);
             var goalVbox = new VBoxContainer();
-            goalVbox.AddThemeConstantOverride("separation", 4);
+            goalVbox.AddThemeConstantOverride("separation", 2);
             goalCard.AddChild(goalVbox);
-
-            goalVbox.AddChild(UITheme.CreateLabel("Goals",
-                UITheme.FontSizeBody, UITheme.Green));
+            goalVbox.AddChild(UITheme.CreateLabel("Goals", UITheme.FontSizeSmall, UITheme.Green));
             foreach (MatchEvent goal in goals)
-            {
                 goalVbox.AddChild(UITheme.CreateLabel(
-                    $"  {goal.Tick}' — {goal.Description}",
-                    UITheme.FontSizeSmall, UITheme.TextSecondary));
-            }
+                    $"  {goal.Tick}' {goal.Description}", 11, UITheme.TextSecondary));
         }
 
-        // ─── Other results ────────────────────────────────────────
+        // Other results
         if (dayResult.Fixtures.Count > 1)
         {
             var otherCard = UITheme.CreateCard();
-            scrollContent.AddChild(otherCard);
-
+            sideContent.AddChild(otherCard);
             var otherVbox = new VBoxContainer();
-            otherVbox.AddThemeConstantOverride("separation", 4);
+            otherVbox.AddThemeConstantOverride("separation", 2);
             otherCard.AddChild(otherVbox);
-
-            otherVbox.AddChild(UITheme.CreateLabel("Other Results",
-                UITheme.FontSizeBody, UITheme.TextSecondary));
+            otherVbox.AddChild(UITheme.CreateLabel("Other Results", UITheme.FontSizeSmall, UITheme.TextSecondary));
             foreach (MatchFixture fix in dayResult.Fixtures)
             {
                 if (fix == _ctx.PlayerFixture || fix.Result == null) continue;
-                Club? home = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.HomeClubId);
-                Club? away = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.AwayClubId);
+                Club? h = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.HomeClubId);
+                Club? a = _gameState.Clubs.FirstOrDefault(c => c.Id == fix.AwayClubId);
                 otherVbox.AddChild(UITheme.CreateLabel(
-                    $"  {home?.Name ?? "?"} {fix.Result.Value.Home} - {fix.Result.Value.Away} {away?.Name ?? "?"}",
-                    UITheme.FontSizeSmall, UITheme.TextSecondary));
+                    $"  {h?.Name ?? "?"} {fix.Result.Value.Home}-{fix.Result.Value.Away} {a?.Name ?? "?"}",
+                    10, UITheme.TextSecondary));
             }
         }
 
@@ -211,8 +228,8 @@ public partial class PostMatch : Control
         var continueBtn = UITheme.CreateButton("Continue",
             won ? UITheme.Yellow : UITheme.Blue,
             won ? UITheme.TextDark : UITheme.TextLight);
-        continueBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        continueBtn.CustomMinimumSize = new Vector2(280, 56);
+        continueBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        continueBtn.CustomMinimumSize = new Vector2(0, 48);
         continueBtn.Pressed += () =>
         {
             if (dayResult.GameOver || dayResult.Victory || dayResult.Finished)
@@ -222,8 +239,16 @@ public partial class PostMatch : Control
         };
         root.AddChild(continueBtn);
 
-        // ─── Entrance animations ──────────────────────────────────
-        Anim.BounceIn(resultLabel, delay: 0.1f, duration: 0.6f);
-        Anim.StaggerChildren(root, stagger: 0.08f, useScale: false);
+        Anim.StaggerChildren(root, stagger: 0.06f, useScale: false);
+    }
+
+    private static string FormatMoney(decimal amount)
+    {
+        return amount switch
+        {
+            >= 1_000_000 or <= -1_000_000 => $"{amount / 1_000_000:F1}M",
+            >= 1_000 or <= -1_000 => $"{amount / 1_000:F0}K",
+            _ => $"{amount:F0}",
+        };
     }
 }

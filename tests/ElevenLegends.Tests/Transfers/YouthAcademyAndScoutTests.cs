@@ -131,9 +131,9 @@ public class YouthAcademyAndScoutTests
         var regions = ScoutingSystem.GetRegions();
         var names = regions.Select(r => r.Name).ToList();
 
-        Assert.Contains("África", names);
-        Assert.Contains("Ásia", names);
-        Assert.Contains("Américas", names);
+        Assert.Contains("Africa", names);
+        Assert.Contains("Asia", names);
+        Assert.Contains("Americas", names);
     }
 
     private static Club CreateClubWithPlayerIds(int[] ids)
