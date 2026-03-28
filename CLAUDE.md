@@ -2,68 +2,70 @@
 
 ## Projeto
 
-**Eleven Legends** — Football Manager + Gacha em Godot 4 (C#/.NET 8.0).
-Mundo fictício, nomes gerados algoritmicamente, estilo visual anime.
+**Eleven Legends** — Football Manager web game.
+Mundo fictício com times fictícios, países reais, estilo visual inspirado no Duolingo.
 
-- **Engine:** Godot 4.4 com C# (.NET 8.0)
-- **Plataformas alvo:** PC, Mobile (Android/iOS), Nintendo Switch, PS5
-- **Banco de dados:** SQLite via Microsoft.Data.Sqlite
-- **Testes:** xUnit (145 testes atualmente)
+- **Stack:** Next.js 15 (App Router) + TypeScript + TailwindCSS 4 + DaisyUI
+- **Animações:** anime.js
+- **Drag & Drop:** dnd-kit
+- **Icons:** heroicons, flag-icons, custom SVGs
+- **State:** Zustand
+- **RNG:** seedrandom (determinístico)
+- **Persistence:** IndexedDB via idb
+- **Testes:** Vitest
+- **Package Manager:** pnpm
 
 ## Referências de UI/UX
 
 A UI deve seguir o padrão **Duolingo** como referência principal:
-- Cores vibrantes e brilhantes (paleta definida em `scenes/autoload/Theme.cs`)
-- Botões 3D com sombra inferior que "afunda" ao pressionar
-- Animações em tudo: entrada, hover, feedback de clique, celebrações
-- Cards com efeito 3D hover (tilt + scale) via `HoverCard` component
-- Drag-and-drop para cartas de jogadores (referência: Shopify Draggable)
-- Efeito 3D hover nas cartas (referência: DaisyUI hover-3d)
+- Cores vibrantes e brilhantes (paleta DaisyUI customizada)
+- Botões 3D com sombra inferior (DaisyUI btn classes)
+- Animações em tudo: entrada, hover, feedback de clique, celebrações (anime.js)
+- Cards com efeito 3D hover (DaisyUI hover-3d)
+- Drag-and-drop para cartas de jogadores (dnd-kit)
 - Transições suaves entre telas (nunca instantâneas)
-
-Essas referências web são para o **tipo de interação desejado** — a implementação é em Godot nativo, NÃO em web/JS.
+- Ícones: heroicons + flag-icons + SVGs customizados
+- Logos de clubes: assets customizados
 
 ## Regras de Desenvolvimento
 
 ### Git
-
-- **Commits atômicos** de responsabilidade única. Um commit = uma mudança lógica.
-- **Nunca usar GPG** para assinar commits. Sempre usar `-c commit.gpgsign=false`.
-- Mensagens em inglês, formato conventional commits (`feat:`, `fix:`, `refactor:`, etc.).
-- Não fazer push sem pedir confirmação.
+- Commits atômicos em inglês, conventional commits (`feat:`, `fix:`, etc.)
+- Sempre push direto para main.
+- Nunca usar GPG para assinar commits: `-c commit.gpgsign=false`
 
 ### Código
-
-- Lógica de jogo fica em `src/`, nunca acoplada a cenas.
-- UI/cenas ficam em `scenes/`. Cenas só orquestram e exibem.
-- Componentes reutilizáveis de UI ficam em `scenes/components/`.
-- Sempre tipos explícitos em C# (evitar `var` quando o tipo não é óbvio).
-- RNG sempre injetado com seed (nunca `GD.Randf()` global).
-- Strings visíveis ao jogador devem usar `Tr()` para i18n.
-- Nomes de jogadores/times são sempre fictícios.
+- Game engine em `engine/` — lógica pura TypeScript, sem dependência de React/Next/DOM
+- UI em `app/` e `components/`
+- Componentes reutilizáveis em `components/ui/`
+- State management com Zustand em `store/`
+- RNG sempre injetado com seed (nunca Math.random() global)
+- Países são reais (Brasil, España, England, Italia). Times são fictícios.
 
 ### UI
-
-- Toda ação deve ter feedback visual (animações, easing).
-- Nunca transições instantâneas — usar Tween com easing.
-- Celebrar conquistas: gol, vitória, breakthrough.
-- Cores semânticas: verde=sucesso, azul=info, amarelo=aviso, vermelho=perigo.
-- Proibido: UI cinza/planilha, texto denso sem hierarquia, ações sem resposta visual.
+- Toda ação deve ter feedback visual (animações, easing)
+- Nunca transições instantâneas
+- Cores semânticas: verde=sucesso, azul=info, amarelo=aviso, vermelho=perigo
+- Proibido: UI cinza/planilha, texto denso sem hierarquia, ações sem resposta visual
 
 ## Estrutura
 
 ```
-src/               # Lógica de jogo (simulação, competição, economia, transfers, persistence)
-scenes/            # Cenas Godot (.tscn + .cs)
-scenes/autoload/   # Singletons (SceneManager, Theme)
-scenes/components/ # Componentes reutilizáveis (HoverCard, Anim)
-tests/             # Testes xUnit
-docs/              # Documentação de design
+app/                  # Next.js pages (App Router)
+components/           # React components (ui, pitch, match, training)
+engine/               # Game logic (models, enums, simulation, competition, economy, transfers)
+store/                # Zustand stores
+lib/                  # Utilities
+public/               # Static assets (icons, flags)
+__tests__/            # Vitest tests
+docs/                 # Design docs
 ```
 
-## Comandos Úteis
+## Comandos
 
 ```bash
-dotnet build                    # Compilar
-dotnet test                     # Rodar testes
+pnpm dev              # Dev server
+pnpm build            # Production build
+pnpm test             # Run tests
+pnpm lint             # Lint
 ```

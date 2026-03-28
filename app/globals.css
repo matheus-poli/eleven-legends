@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  /* Duolingo-inspired palette */
+  --color-green: #58CC02;
+  --color-green-dark: #58A700;
+  --color-blue: #1CB0F6;
+  --color-blue-dark: #1899D6;
+  --color-red: #FF4B4B;
+  --color-yellow: #FFC800;
+  --color-orange: #FF9600;
+  --color-purple: #CE82FF;
+  --color-pitch-green: #2E7D32;
+  --color-pitch-green-light: #388E3C;
+}

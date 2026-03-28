@@ -1,33 +1,25 @@
-# Godot 4
-.godot/
-*.uid
+# dependencies
+node_modules/
+.pnpm-store/
 
-# Export
-export/
-*.pck
-*.apk
-*.ipa
+# next.js
+.next/
+out/
 
-# .NET / C#
-bin/
-obj/
-*.user
-*.suo
-*.cache
-*.DotSettings.user
-TestResults/
+# build
+dist/
+
+# env
+.env*.local
+
+# misc
+*.tsbuildinfo
+next-env.d.ts
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Screenshots
-Screenshot*.png
-Screenshot*.png.import
-
-# Editor
+# IDE
 .vscode/
 .idea/
-
-# Save files
-saves/
