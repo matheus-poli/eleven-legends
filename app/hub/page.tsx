@@ -174,7 +174,7 @@ export default function HubPage() {
           {day.type === DayType.Training && (
             <>
               <button
-                className="btn btn-info btn-lg shadow-lg font-bold text-white w-full"
+                className="btn btn-info btn-lg shadow-lg font-bold text-white w-full btn-raised"
                 onClick={() => router.push("/training")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +193,7 @@ export default function HubPage() {
 
           {day.type === DayType.MatchDay && (
             <button
-              className="btn btn-success btn-lg shadow-lg font-bold text-white w-full"
+              className="btn btn-success btn-lg shadow-lg font-bold text-white w-full btn-raised"
               onClick={() => router.push("/match")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,7 +206,7 @@ export default function HubPage() {
 
           {day.type === DayType.MundialMatchDay && (
             <button
-              className="btn btn-warning btn-lg shadow-lg font-bold w-full"
+              className="btn btn-warning btn-lg shadow-lg font-bold w-full btn-raised"
               onClick={() => router.push("/match")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,7 +219,7 @@ export default function HubPage() {
           {day.type === DayType.TransferWindow && (
             <>
               <button
-                className="btn btn-lg shadow-lg font-bold text-white w-full"
+                className="btn btn-lg shadow-lg font-bold text-white w-full btn-raised"
                 style={{ backgroundColor: "var(--color-orange)" }}
                 onClick={() => router.push("/transfers")}
               >
@@ -239,7 +239,7 @@ export default function HubPage() {
 
           {day.type === DayType.Rest && (
             <button
-              className="btn btn-info btn-lg shadow-lg font-bold text-white w-full"
+              className="btn btn-info btn-lg shadow-lg font-bold text-white w-full btn-raised"
               onClick={advanceDay}
             >
               Advance Day

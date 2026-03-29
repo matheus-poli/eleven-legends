@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/game-store";
-import { PageWrapper } from "@/components/ui";
+import { PageWrapper, WindIcon } from "@/components/ui";
 import { generate as generateCards } from "@/engine/locker-room-card-generator";
 import { applyCard } from "@/engine/simulation/halftime-processor";
 import { type LockerRoomCard } from "@/engine/models/locker-room-card";
 import { CardEffect } from "@/engine/enums/card-effect";
 import { SeededRng } from "@/engine/simulation/rng";
+import {
+  FireIcon,
+  BoltIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/solid";
 import {
   getMatchSession,
   getMatchConfig,
@@ -19,42 +24,43 @@ import {
 // Card visual helpers
 // ---------------------------------------------------------------------------
 
-function cardEffectIcon(effect: CardEffect): string {
+function cardEffectIcon(effect: CardEffect): ReactNode {
+  const cls = "w-10 h-10 text-white";
   switch (effect) {
     case CardEffect.MoraleBoost:
-      return "\uD83D\uDD25";
+      return <FireIcon className={cls} />;
     case CardEffect.StaminaRecovery:
-      return "\u26A1";
+      return <BoltIcon className={cls} />;
     case CardEffect.TeamBuff:
-      return "\uD83D\uDEE1\uFE0F";
+      return <ShieldCheckIcon className={cls} />;
     case CardEffect.OpponentDebuff:
-      return "\uD83D\uDCA8";
+      return <WindIcon className={cls} />;
   }
 }
 
 function cardEffectColor(effect: CardEffect): string {
   switch (effect) {
     case CardEffect.MoraleBoost:
-      return "from-orange-500 to-red-600";
+      return "from-orange to-red";
     case CardEffect.StaminaRecovery:
-      return "from-green-500 to-emerald-600";
+      return "from-green to-green-dark";
     case CardEffect.TeamBuff:
-      return "from-blue-500 to-indigo-600";
+      return "from-blue to-blue-dark";
     case CardEffect.OpponentDebuff:
-      return "from-purple-500 to-fuchsia-600";
+      return "from-purple to-purple/80";
   }
 }
 
 function cardBorderColor(effect: CardEffect): string {
   switch (effect) {
     case CardEffect.MoraleBoost:
-      return "border-orange-400/50 hover:border-orange-400";
+      return "border-orange/50 hover:border-orange";
     case CardEffect.StaminaRecovery:
-      return "border-green-400/50 hover:border-green-400";
+      return "border-green/50 hover:border-green";
     case CardEffect.TeamBuff:
-      return "border-blue-400/50 hover:border-blue-400";
+      return "border-blue/50 hover:border-blue";
     case CardEffect.OpponentDebuff:
-      return "border-purple-400/50 hover:border-purple-400";
+      return "border-purple/50 hover:border-purple";
   }
 }
 
@@ -176,7 +182,7 @@ export default function HalftimePage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <PageWrapper gradient="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
+    <PageWrapper gradient="bg-gradient-to-b from-neutral via-blue-dark/30 to-neutral">
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
         {/* Score */}
         <div className="text-center mb-8">
@@ -228,9 +234,9 @@ export default function HalftimePage() {
                 <div
                   className={`bg-gradient-to-br ${cardEffectColor(card.effect)} p-6 text-center`}
                 >
-                  <span className="text-5xl block mb-2">
+                  <div className="flex justify-center mb-2">
                     {cardEffectIcon(card.effect)}
-                  </span>
+                  </div>
                   <h3 className="text-white font-bold text-lg">
                     {card.name}
                   </h3>
@@ -249,7 +255,7 @@ export default function HalftimePage() {
                 {/* Choose button */}
                 <div className="bg-base-300 px-4 pb-4">
                   <button
-                    className={`btn btn-block ${
+                    className={`btn btn-block btn-raised ${
                       isChosen ? "btn-success" : "btn-primary"
                     }`}
                     disabled={chosen !== null}

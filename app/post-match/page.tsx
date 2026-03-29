@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/game-store";
 import {
@@ -9,11 +9,21 @@ import {
   Money,
   formatMoney,
   Badge,
+  SoccerBallIcon,
+  YellowCardIcon,
+  RedCardIcon,
 } from "@/components/ui";
 import { MatchPitchView } from "@/components/pitch";
 import { EventType } from "@/engine/enums/event-type";
 import { type Player } from "@/engine/models/player";
 import { type MatchEvent } from "@/engine/models/match-event";
+import {
+  TrophyIcon,
+  HandThumbUpIcon,
+  FaceFrownIcon,
+  StarIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/solid";
 import {
   getMatchSession,
   getMatchConfig,
@@ -42,25 +52,25 @@ function getOutcome(
 
 const OUTCOME_CONFIG: Record<
   Outcome,
-  { gradient: string; label: string; icon: string; textColor: string }
+  { gradient: string; label: string; icon: ReactNode; textColor: string }
 > = {
   win: {
-    gradient: "bg-gradient-to-b from-green-600 to-green-900",
+    gradient: "bg-gradient-to-b from-green to-green-dark",
     label: "VICTORY",
-    icon: "\uD83C\uDFC6",
-    textColor: "text-green-100",
+    icon: <TrophyIcon className="w-14 h-14 text-yellow" />,
+    textColor: "text-white",
   },
   draw: {
-    gradient: "bg-gradient-to-b from-yellow-600 to-yellow-900",
+    gradient: "bg-gradient-to-b from-yellow to-yellow-dark",
     label: "DRAW",
-    icon: "\uD83E\uDD1D",
-    textColor: "text-yellow-100",
+    icon: <HandThumbUpIcon className="w-14 h-14 text-white" />,
+    textColor: "text-white",
   },
   loss: {
-    gradient: "bg-gradient-to-b from-gray-600 to-gray-900",
+    gradient: "bg-gradient-to-b from-neutral to-neutral/80",
     label: "DEFEAT",
-    icon: "\uD83D\uDE14",
-    textColor: "text-gray-200",
+    icon: <FaceFrownIcon className="w-14 h-14 text-white/60" />,
+    textColor: "text-white/80",
   },
 };
 
@@ -176,7 +186,7 @@ export default function PostMatchPage() {
       <div className="min-h-screen flex flex-col">
         {/* Header */}
         <div className="text-center py-8">
-          <span className="text-5xl mb-2 block">{outcomeCfg.icon}</span>
+          <div className="flex justify-center mb-2">{outcomeCfg.icon}</div>
           <h1
             className={`text-5xl font-black tracking-tight ${outcomeCfg.textColor}`}
           >
@@ -212,10 +222,10 @@ export default function PostMatchPage() {
           <div className="lg:w-[40%] space-y-4 overflow-auto max-h-[60vh] lg:max-h-[70vh]">
             {/* MVP Card */}
             {mvp && (
-              <div className="card bg-base-300/80 backdrop-blur border-2 border-warning/50 shadow-lg">
+              <div className="card bg-base-100/90 backdrop-blur border-2 border-warning shadow-lg">
                 <div className="card-body p-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">\uD83C\uDFC5</span>
+                    <TrophyIcon className="w-8 h-8 text-yellow shrink-0" />
                     <div className="flex-1">
                       <p className="text-xs text-warning font-bold uppercase tracking-wider">
                         Man of the Match
@@ -233,10 +243,10 @@ export default function PostMatchPage() {
 
             {/* SVP Card */}
             {svp && (
-              <div className="card bg-base-300/80 backdrop-blur border-2 border-info/50 shadow-lg">
+              <div className="card bg-base-100/90 backdrop-blur border-2 border-info shadow-lg">
                 <div className="card-body p-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">\u2B50</span>
+                    <StarIcon className="w-7 h-7 text-blue shrink-0" />
                     <div className="flex-1">
                       <p className="text-xs text-info font-bold uppercase tracking-wider">
                         Second Best
@@ -253,9 +263,9 @@ export default function PostMatchPage() {
             )}
 
             {/* Money earned */}
-            <div className="card bg-base-300/80 backdrop-blur shadow-lg">
+            <div className="card bg-base-100/90 backdrop-blur shadow-lg">
               <div className="card-body p-4 flex-row items-center gap-3">
-                <span className="text-2xl">\uD83D\uDCB0</span>
+                <BanknotesIcon className="w-7 h-7 text-green shrink-0" />
                 <div className="flex-1">
                   <p className="text-xs text-base-content/50 font-bold uppercase tracking-wider">
                     Match Revenue
@@ -267,10 +277,10 @@ export default function PostMatchPage() {
 
             {/* Goals */}
             {goals.length > 0 && (
-              <div className="card bg-base-300/80 backdrop-blur border border-success/30 shadow-lg">
+              <div className="card bg-base-100/90 backdrop-blur border border-success/30 shadow-lg">
                 <div className="card-body p-4">
-                  <h3 className="text-sm font-bold text-success mb-2">
-                    \u26BD Goals
+                  <h3 className="text-sm font-bold text-success mb-2 flex items-center gap-1.5">
+                    <SoccerBallIcon className="w-4 h-4" /> Goals
                   </h3>
                   <div className="space-y-1.5">
                     {goals.map((evt, i) => {
@@ -278,17 +288,13 @@ export default function PostMatchPage() {
                       const assister = evt.secondaryPlayerId
                         ? allPlayers.get(evt.secondaryPlayerId)
                         : null;
-                      const minute =
-                        evt.tick > 45
-                          ? evt.tick
-                          : evt.tick;
                       return (
                         <div
                           key={i}
                           className="flex items-center gap-2 text-sm"
                         >
                           <span className="text-base-content/40 tabular-nums w-8 text-right">
-                            {minute}&apos;
+                            {evt.tick}&apos;
                           </span>
                           <span className="font-medium">
                             {scorer?.name ?? `Player #${evt.playerId}`}
@@ -308,7 +314,7 @@ export default function PostMatchPage() {
 
             {/* Cards */}
             {cards.length > 0 && (
-              <div className="card bg-base-300/80 backdrop-blur border border-warning/30 shadow-lg">
+              <div className="card bg-base-100/90 backdrop-blur border border-warning/30 shadow-lg">
                 <div className="card-body p-4">
                   <h3 className="text-sm font-bold text-warning mb-2">
                     Cards
@@ -321,11 +327,11 @@ export default function PostMatchPage() {
                           key={i}
                           className="flex items-center gap-2 text-sm"
                         >
-                          <span>
-                            {evt.type === EventType.RedCard
-                              ? "\uD83D\uDFE5"
-                              : "\uD83D\uDFE8"}
-                          </span>
+                          {evt.type === EventType.RedCard ? (
+                            <RedCardIcon className="w-4 h-5" />
+                          ) : (
+                            <YellowCardIcon className="w-4 h-5" />
+                          )}
                           <span className="font-medium">
                             {player?.name ??
                               `Player #${evt.playerId}`}
@@ -343,7 +349,7 @@ export default function PostMatchPage() {
 
             {/* Other results */}
             {otherResults.length > 0 && (
-              <div className="card bg-base-300/80 backdrop-blur shadow-lg">
+              <div className="card bg-base-100/90 backdrop-blur shadow-lg">
                 <div className="card-body p-4">
                   <h3 className="text-sm font-bold text-base-content/60 mb-2">
                     Other Results
@@ -385,7 +391,7 @@ export default function PostMatchPage() {
         {/* Footer */}
         <div className="p-4 text-center">
           <button
-            className="btn btn-primary btn-lg shadow-lg min-w-48"
+            className="btn btn-warning btn-lg shadow-lg min-w-48 btn-raised font-bold"
             onClick={handleContinue}
           >
             Continue

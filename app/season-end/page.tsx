@@ -6,6 +6,14 @@ import { PageWrapper, Money, formatMoney } from "@/components/ui";
 import { isGameOver, isVictory } from "@/engine/career-manager";
 import { ManagerStatus } from "@/engine/enums/manager-status";
 import { TransferType } from "@/engine/enums/transfer-type";
+import {
+  TrophyIcon,
+  BriefcaseIcon,
+  ChartBarIcon,
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/solid";
+import { type ReactNode } from "react";
 
 /* ================================================================== */
 /*  Season End / Game Over Page                                        */
@@ -40,23 +48,23 @@ export default function SeasonEndPage() {
 
   const variantConfig: Record<
     Variant,
-    { gradient: string; icon: string; title: string; subtitle: string }
+    { gradient: string; icon: ReactNode; title: string; subtitle: string }
   > = {
     champion: {
-      gradient: "bg-gradient-to-b from-yellow-400 to-yellow-600",
-      icon: "🏆",
+      gradient: "bg-gradient-to-b from-yellow to-yellow-dark",
+      icon: <TrophyIcon className="w-16 h-16 text-white" />,
       title: "CHAMPION!",
       subtitle: club.name,
     },
     dismissed: {
-      gradient: "bg-gradient-to-b from-gray-500 to-gray-700",
-      icon: "💼",
+      gradient: "bg-gradient-to-b from-neutral to-neutral/80",
+      icon: <BriefcaseIcon className="w-16 h-16 text-white/60" />,
       title: "Game Over",
       subtitle: "You have been sacked.",
     },
     season: {
-      gradient: "bg-gradient-to-b from-blue-500 to-blue-700",
-      icon: "📊",
+      gradient: "bg-gradient-to-b from-blue to-blue-dark",
+      icon: <ChartBarIcon className="w-16 h-16 text-white" />,
       title: "Season Complete",
       subtitle: `${club.name} — End of Season`,
     },
@@ -95,13 +103,13 @@ export default function SeasonEndPage() {
       <div className="flex flex-col items-center min-h-screen px-4 py-10">
         {/* ---- Hero header ---- */}
         <div className="text-center mb-8 mt-6">
-          <span
-            className={`text-7xl block mb-4 ${
+          <div
+            className={`flex justify-center mb-4 ${
               variant === "champion" ? "animate-bounce" : ""
             }`}
           >
             {config.icon}
-          </span>
+          </div>
           <h1
             className={`text-4xl font-black tracking-tight ${
               variant === "dismissed" ? "text-white/80" : "text-white"
@@ -113,7 +121,7 @@ export default function SeasonEndPage() {
         </div>
 
         {/* ---- Stats card ---- */}
-        <div className="card bg-white shadow-xl w-full max-w-md mb-4">
+        <div className="card bg-base-100 shadow-xl w-full max-w-md mb-4">
           <div className="card-body p-5">
             <h2 className="card-title text-sm text-base-content/50 uppercase tracking-widest mb-3">
               Season Summary
@@ -158,7 +166,7 @@ export default function SeasonEndPage() {
 
         {/* ---- Transfer Activity card ---- */}
         {myTransfers.length > 0 && (
-          <div className="card bg-white shadow-xl w-full max-w-md mb-6">
+          <div className="card bg-base-100 shadow-xl w-full max-w-md mb-6">
             <div className="card-body p-5">
               <h2 className="card-title text-sm text-base-content/50 uppercase tracking-widest mb-3">
                 Transfer Activity
@@ -167,8 +175,7 @@ export default function SeasonEndPage() {
               <div className="flex flex-col gap-2">
                 {myTransfers.map((t, i) => {
                   const isIncoming = t.toClubId === club.id;
-                  const icon = isIncoming ? "↙️" : "↗️";
-                  const color = isIncoming ? "text-green-600" : "text-red-600";
+                  const color = isIncoming ? "text-green" : "text-red";
 
                   return (
                     <div
@@ -176,7 +183,11 @@ export default function SeasonEndPage() {
                       className="flex items-center justify-between py-1.5 border-b border-base-200 last:border-0"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm">{icon}</span>
+                        {isIncoming ? (
+                          <ArrowDownLeftIcon className="w-4 h-4 text-green shrink-0" />
+                        ) : (
+                          <ArrowUpRightIcon className="w-4 h-4 text-red shrink-0" />
+                        )}
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">
                             {t.playerName}
@@ -200,7 +211,7 @@ export default function SeasonEndPage() {
 
         {/* ---- Main Menu button ---- */}
         <button
-          className={`btn btn-lg font-bold shadow-lg w-full max-w-md ${
+          className={`btn btn-lg font-bold shadow-lg w-full max-w-md btn-raised ${
             variant === "champion"
               ? "btn-warning"
               : variant === "dismissed"

@@ -16,6 +16,12 @@ import { type Club } from "@/engine/models/club";
 import { type ScoutRegion } from "@/engine/models/scout-region";
 import { outfieldOverall, goalkeeperOverall } from "@/engine/models/player-attributes";
 import { SeededRng } from "@/engine/simulation/rng";
+import {
+  MagnifyingGlassIcon,
+  NoSymbolIcon,
+  AcademicCapIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/solid";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -236,10 +242,10 @@ export default function TransfersPage() {
                   }`}
                   onClick={() => setTab(t)}
                 >
-                  {t === "buy" && "🟢 Buy"}
-                  {t === "sell" && "🔴 Sell"}
-                  {t === "youth" && "🔵 Youth"}
-                  {t === "scout" && "🟣 Scout"}
+                  {t === "buy" && <><span className="w-2 h-2 rounded-full bg-green inline-block" /> Buy</>}
+                  {t === "sell" && <><span className="w-2 h-2 rounded-full bg-red inline-block" /> Sell</>}
+                  {t === "youth" && <><span className="w-2 h-2 rounded-full bg-blue inline-block" /> Youth</>}
+                  {t === "scout" && <><span className="w-2 h-2 rounded-full bg-purple inline-block" /> Scout</>}
                 </button>
               ))}
             </div>
@@ -364,7 +370,7 @@ function BuyTab({
   if (items.length === 0) {
     return (
       <div className="text-center text-base-content/40 py-16">
-        <p className="text-4xl mb-2">🔍</p>
+        <MagnifyingGlassIcon className="w-10 h-10 mx-auto mb-2 text-base-content/30" />
         <p>No players match your filters.</p>
       </div>
     );
@@ -411,7 +417,7 @@ function SellTab({
   if (items.length === 0) {
     return (
       <div className="text-center text-base-content/40 py-16">
-        <p className="text-4xl mb-2">🚫</p>
+        <NoSymbolIcon className="w-10 h-10 mx-auto mb-2 text-base-content/30" />
         <p>No players available to sell (minimum squad size reached).</p>
       </div>
     );
@@ -457,7 +463,7 @@ function YouthTab({
       {/* Generate button */}
       {!generated && (
         <div className="text-center py-12">
-          <p className="text-5xl mb-4">🎓</p>
+          <AcademicCapIcon className="w-12 h-12 mx-auto mb-4 text-blue" />
           <h2 className="text-xl font-bold mb-2">Youth Academy</h2>
           <p className="text-base-content/60 mb-6">
             Generate 3 youth prospects for your academy.
@@ -466,7 +472,7 @@ function YouthTab({
             <span className="text-base-content/40"> (1 per transfer window)</span>
           </p>
           <button
-            className="btn btn-info btn-lg font-bold shadow-md"
+            className="btn btn-info btn-lg font-bold shadow-md btn-raised"
             onClick={onGenerate}
             disabled={club.balance < YOUTH_COST}
           >
@@ -508,7 +514,7 @@ function YouthTab({
 
       {generated && prospects.length === 0 && (
         <div className="text-center text-base-content/40 py-16">
-          <p className="text-4xl mb-2">✅</p>
+          <CheckCircleIcon className="w-10 h-10 mx-auto mb-2 text-green" />
           <p>All prospects recruited or dismissed.</p>
         </div>
       )}
@@ -604,7 +610,7 @@ function ScoutTab({
 
       {scoutedRegion && scoutResults.length === 0 && (
         <div className="text-center text-base-content/40 py-8">
-          <p className="text-4xl mb-2">✅</p>
+          <CheckCircleIcon className="w-10 h-10 mx-auto mb-2 text-green" />
           <p>All scouted players signed. Scout another region!</p>
         </div>
       )}

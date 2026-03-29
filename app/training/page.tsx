@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/game-store";
-import { PageWrapper } from "@/components/ui";
+import { PageWrapper, SoccerBallIcon } from "@/components/ui";
 import { generateChoices, processTraining } from "@/engine/simulation/training-processor";
 import { type TrainingChoice, type TrainingResult, type TrainingPlayerEvent } from "@/engine/models/training-session";
 import { TrainingType } from "@/engine/enums/training-type";
 import { SeededRng } from "@/engine/simulation/rng";
 import { type Club } from "@/engine/models/club";
+import {
+  BoltIcon,
+  PuzzlePieceIcon,
+  MoonIcon,
+  StarIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+} from "@heroicons/react/24/solid";
 
 /* ------------------------------------------------------------------ */
 /*  Training-choice metadata: icon, accent color, and descriptions    */
@@ -16,37 +24,37 @@ import { type Club } from "@/engine/models/club";
 
 const TRAINING_META: Record<
   TrainingType,
-  { icon: string; accent: string; bg: string; border: string }
+  { icon: ReactNode; accent: string; bg: string; border: string }
 > = {
   [TrainingType.IntenseDrills]: {
-    icon: "🏋️",
-    accent: "text-red-600",
-    bg: "bg-red-100",
-    border: "border-red-400",
+    icon: <BoltIcon className="w-8 h-8 text-red" />,
+    accent: "text-red",
+    bg: "bg-red/10",
+    border: "border-red",
   },
   [TrainingType.TacticalSession]: {
-    icon: "🧩",
-    accent: "text-green-600",
-    bg: "bg-green-100",
-    border: "border-green-400",
+    icon: <PuzzlePieceIcon className="w-8 h-8 text-green" />,
+    accent: "text-green",
+    bg: "bg-green/10",
+    border: "border-green",
   },
   [TrainingType.LightTraining]: {
-    icon: "⚽",
-    accent: "text-blue-600",
-    bg: "bg-blue-100",
-    border: "border-blue-400",
+    icon: <SoccerBallIcon className="w-8 h-8 text-blue" />,
+    accent: "text-blue",
+    bg: "bg-blue/10",
+    border: "border-blue",
   },
   [TrainingType.RestDay]: {
-    icon: "🌙",
-    accent: "text-yellow-600",
-    bg: "bg-yellow-100",
-    border: "border-yellow-400",
+    icon: <MoonIcon className="w-8 h-8 text-yellow" />,
+    accent: "text-yellow-dark",
+    bg: "bg-yellow/10",
+    border: "border-yellow",
   },
   [TrainingType.YouthFocus]: {
-    icon: "⭐",
-    accent: "text-purple-600",
-    bg: "bg-purple-100",
-    border: "border-purple-400",
+    icon: <StarIcon className="w-8 h-8 text-purple" />,
+    accent: "text-purple",
+    bg: "bg-purple/10",
+    border: "border-purple",
   },
 };
 
@@ -108,11 +116,13 @@ export default function TrainingPage() {
 
   if (phase === "choose") {
     return (
-      <PageWrapper gradient="bg-gradient-to-b from-blue-500 to-blue-700">
+      <PageWrapper gradient="bg-gradient-to-b from-blue to-blue-dark">
         <div className="flex flex-col items-center justify-center min-h-screen px-4 py-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="text-5xl mb-2 block">🏋️</span>
+            <div className="flex justify-center mb-2">
+              <BoltIcon className="w-12 h-12 text-white" />
+            </div>
             <h1 className="text-3xl font-black text-white tracking-tight">
               Training Day &mdash; Day {dayIndex + 1}
             </h1>
@@ -128,12 +138,12 @@ export default function TrainingPage() {
               return (
                 <div
                   key={choice.type}
-                  className="card bg-white shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
+                  className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
                 >
                   <div className="card-body items-center text-center p-5">
                     {/* Icon area */}
                     <div
-                      className={`w-16 h-16 rounded-2xl ${meta.bg} flex items-center justify-center text-3xl mb-2 group-hover:scale-110 transition-transform`}
+                      className={`w-16 h-16 rounded-2xl ${meta.bg} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
                     >
                       {meta.icon}
                     </div>
@@ -150,7 +160,7 @@ export default function TrainingPage() {
 
                     {/* Choose button */}
                     <button
-                      className={`btn btn-sm mt-3 w-full border-2 ${meta.border} ${meta.accent} bg-white hover:${meta.bg} font-bold`}
+                      className={`btn btn-sm mt-3 w-full border-2 ${meta.border} ${meta.accent} bg-base-100 font-bold btn-raised`}
                       onClick={() => handleChoose(choice)}
                     >
                       Choose
@@ -185,8 +195,9 @@ export default function TrainingPage() {
           <p className="text-sm text-base-content/50 uppercase tracking-widest mb-1">
             Training Complete
           </p>
-          <h1 className="text-2xl font-black">
-            {choiceMeta?.icon} {result?.choice.name}
+          <h1 className="text-2xl font-black flex items-center justify-center gap-2">
+            {choiceMeta?.icon && <span className="[&_svg]:w-6 [&_svg]:h-6">{choiceMeta.icon}</span>}
+            {result?.choice.name}
           </h1>
         </div>
 
@@ -200,7 +211,7 @@ export default function TrainingPage() {
             </div>
           ) : (
             <div className="text-center text-base-content/40 mt-12">
-              <p className="text-4xl mb-2">😴</p>
+              <MoonIcon className="w-10 h-10 mx-auto mb-2 text-base-content/30" />
               <p>Nothing notable happened during training.</p>
             </div>
           )}
@@ -209,7 +220,7 @@ export default function TrainingPage() {
         {/* Footer */}
         <div className="p-4 border-t border-base-300 bg-base-100">
           <button
-            className="btn btn-primary btn-block text-lg font-bold shadow-md"
+            className="btn btn-primary btn-block text-lg font-bold shadow-md btn-raised"
             onClick={handleContinue}
           >
             Continue
@@ -226,21 +237,24 @@ export default function TrainingPage() {
 
 function TrainingEventCard({ event }: { event: TrainingPlayerEvent }) {
   const isPositive = event.isPositive;
-  const borderColor = isPositive ? "border-l-green-500" : "border-l-red-500";
-  const iconBg = isPositive ? "bg-green-100" : "bg-red-100";
-  const icon = isPositive ? "↑" : "↓";
-  const iconColor = isPositive ? "text-green-600" : "text-red-600";
+  const borderColor = isPositive ? "border-l-green" : "border-l-red";
+  const iconBg = isPositive ? "bg-green/10" : "bg-red/10";
+  const iconColor = isPositive ? "text-green" : "text-red";
 
   return (
     <div
-      className={`card bg-white shadow-sm border-l-4 ${borderColor} transition-all duration-200 hover:shadow-md`}
+      className={`card bg-base-100 shadow-sm border-l-4 ${borderColor} transition-all duration-200 hover:shadow-md`}
     >
       <div className="card-body p-4 flex-row items-center gap-3">
         {/* Arrow icon */}
         <div
-          className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center text-lg font-black ${iconColor} shrink-0`}
+          className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center ${iconColor} shrink-0`}
         >
-          {icon}
+          {isPositive ? (
+            <ArrowUpIcon className="w-5 h-5" />
+          ) : (
+            <ArrowDownIcon className="w-5 h-5" />
+          )}
         </div>
 
         {/* Text content */}
@@ -252,7 +266,7 @@ function TrainingEventCard({ event }: { event: TrainingPlayerEvent }) {
             {event.moraleDelta !== 0 && (
               <span
                 className={`text-xs font-medium ${
-                  event.moraleDelta > 0 ? "text-green-600" : "text-red-600"
+                  event.moraleDelta > 0 ? "text-green" : "text-red"
                 }`}
               >
                 Morale {event.moraleDelta > 0 ? "+" : ""}
@@ -262,7 +276,7 @@ function TrainingEventCard({ event }: { event: TrainingPlayerEvent }) {
             {event.chemistryDelta !== 0 && (
               <span
                 className={`text-xs font-medium ${
-                  event.chemistryDelta > 0 ? "text-blue-600" : "text-red-600"
+                  event.chemistryDelta > 0 ? "text-blue" : "text-red"
                 }`}
               >
                 Chemistry {event.chemistryDelta > 0 ? "+" : ""}

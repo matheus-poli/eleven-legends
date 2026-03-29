@@ -1,11 +1,55 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes:
-    eleven --default,
-    dark;
-}
+@plugin "daisyui";
 
 /* ── Duolingo-inspired DaisyUI theme ────────────────────────── */
+@plugin "daisyui/theme" {
+  name: "eleven";
+  default: true;
+  color-scheme: light;
+
+  /* Base */
+  --color-base-100: #ffffff;
+  --color-base-200: #f0f4f0;
+  --color-base-300: #e0e7e0;
+  --color-base-content: #1a2e1a;
+
+  /* Primary = Duolingo green */
+  --color-primary: #58CC02;
+  --color-primary-content: #ffffff;
+
+  /* Secondary = Duolingo blue */
+  --color-secondary: #1CB0F6;
+  --color-secondary-content: #ffffff;
+
+  /* Accent = Purple */
+  --color-accent: #CE82FF;
+  --color-accent-content: #ffffff;
+
+  /* Neutral */
+  --color-neutral: #3C3C3C;
+  --color-neutral-content: #E8E8E8;
+
+  /* Semantic colors */
+  --color-info: #1CB0F6;
+  --color-info-content: #ffffff;
+  --color-success: #58CC02;
+  --color-success-content: #ffffff;
+  --color-warning: #FFC800;
+  --color-warning-content: #1a2e1a;
+  --color-error: #FF4B4B;
+  --color-error-content: #ffffff;
+
+  /* Radius */
+  --rounded-box: 1rem;
+  --rounded-btn: 0.75rem;
+  --rounded-badge: 1.5rem;
+
+  /* Button depth for 3D effect */
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ── Custom color tokens ───────────────────────────────────── */
 @theme {
   --color-green: #58CC02;
   --color-green-dark: #58A700;

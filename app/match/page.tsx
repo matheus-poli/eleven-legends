@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/game-store";
 import {
@@ -9,6 +9,11 @@ import {
   RatingBadge,
   OvrBadge,
   Badge,
+  SoccerBallIcon,
+  YellowCardIcon,
+  RedCardIcon,
+  SubstitutionIcon,
+  GlovesIcon,
 } from "@/components/ui";
 import { MatchPitchView } from "@/components/pitch";
 import { LiveMatchSession } from "@/engine/simulation/live-match-session";
@@ -22,6 +27,11 @@ import { type Formation, F442, FORMATION_PRESETS } from "@/engine/models/formati
 import { averageOverall } from "@/engine/simulation/formation-optimizer";
 import { type Substitution } from "@/engine/models/substitution";
 import { type Player } from "@/engine/models/player";
+import {
+  ExclamationTriangleIcon,
+  PlayIcon,
+  PauseIcon,
+} from "@heroicons/react/24/solid";
 import {
   setMatchData,
   getMatchSession,
@@ -40,22 +50,23 @@ type MatchPhaseUI = "prematch" | "playing" | "halftime-transition";
 // Event icons / colors
 // ---------------------------------------------------------------------------
 
-function eventIcon(type: EventType): string {
+function eventIcon(type: EventType): ReactNode {
+  const base = "w-5 h-5";
   switch (type) {
     case EventType.Goal:
-      return "\u26BD";
+      return <SoccerBallIcon className={`${base} text-success`} />;
     case EventType.YellowCard:
-      return "\uD83D\uDFE8";
+      return <YellowCardIcon className="w-4 h-5" />;
     case EventType.RedCard:
-      return "\uD83D\uDFE5";
+      return <RedCardIcon className="w-4 h-5" />;
     case EventType.Foul:
-      return "\u26A0\uFE0F";
+      return <ExclamationTriangleIcon className={`${base} text-orange`} />;
     case EventType.Save:
-      return "\uD83E\uDDE4";
+      return <GlovesIcon className={`${base} text-info`} />;
     case EventType.Substitution:
-      return "\uD83D\uDD04";
+      return <SubstitutionIcon className={`${base} text-orange`} />;
     default:
-      return "\u25CF";
+      return <span className="w-2 h-2 rounded-full bg-base-content/40 inline-block" />;
   }
 }
 
@@ -68,11 +79,11 @@ function eventColor(type: EventType): string {
     case EventType.RedCard:
       return "bg-error/10 border-error text-error";
     case EventType.Foul:
-      return "bg-orange-500/10 border-orange-400 text-orange-400";
+      return "bg-orange/10 border-orange text-orange";
     case EventType.Save:
       return "bg-info/10 border-info text-info";
     case EventType.Substitution:
-      return "bg-orange-500/10 border-orange-400 text-orange-400";
+      return "bg-orange/10 border-orange text-orange";
     default:
       return "bg-base-200 border-base-300 text-base-content/60";
   }
@@ -309,12 +320,12 @@ export default function MatchPage() {
 
   if (phase === "prematch") {
     return (
-      <PageWrapper gradient="bg-gradient-to-b from-base-300 to-base-100">
+      <PageWrapper gradient="bg-gradient-to-b from-green/10 to-base-200">
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-black mb-2">
-              <span className="text-primary">
+              <span className="text-success">
                 {isHome ? playerClub?.name : opponentClub?.name ?? "Away"}
               </span>
               <span className="text-base-content/40 mx-3">vs</span>
@@ -328,7 +339,7 @@ export default function MatchPage() {
           </div>
 
           {/* Formation Selector */}
-          <div className="card bg-base-200 shadow-lg mb-6">
+          <div className="card bg-base-100 shadow-lg border border-base-300 mb-6">
             <div className="card-body">
               <h2 className="card-title text-lg">Formation</h2>
               <div className="flex flex-wrap gap-2">
@@ -353,7 +364,7 @@ export default function MatchPage() {
           </div>
 
           {/* Tactical Style */}
-          <div className="card bg-base-200 shadow-lg mb-6">
+          <div className="card bg-base-100 shadow-lg border border-base-300 mb-6">
             <div className="card-body">
               <h2 className="card-title text-lg">Tactical Style</h2>
               <div className="flex gap-2">
@@ -369,7 +380,7 @@ export default function MatchPage() {
                   return (
                     <button
                       key={s}
-                      className={`btn flex-1 ${
+                      className={`btn flex-1 btn-raised ${
                         isSelected
                           ? s === TacticalStyle.Attacking
                             ? "btn-error"
@@ -391,13 +402,13 @@ export default function MatchPage() {
           {/* Actions */}
           <div className="flex gap-3">
             <button
-              className="btn btn-outline flex-1"
+              className="btn btn-outline btn-secondary flex-1 btn-raised"
               onClick={() => router.push("/squad?returnUrl=/match")}
             >
               Edit Squad
             </button>
             <button
-              className="btn btn-primary btn-lg flex-1 shadow-lg"
+              className="btn btn-primary btn-lg flex-1 shadow-lg btn-raised font-bold"
               onClick={handleStartMatch}
             >
               Start Match!
@@ -414,7 +425,7 @@ export default function MatchPage() {
 
   if (phase === "halftime-transition") {
     return (
-      <PageWrapper gradient="bg-gradient-to-b from-slate-800 to-slate-900">
+      <PageWrapper gradient="bg-gradient-to-b from-neutral to-neutral/80">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h1 className="text-5xl font-black text-white mb-4">HALFTIME</h1>
@@ -425,7 +436,7 @@ export default function MatchPage() {
               {homeTeam?.name} vs {awayTeam?.name}
             </p>
             <button
-              className="btn btn-warning btn-lg shadow-lg animate-pulse"
+              className="btn btn-warning btn-lg shadow-lg btn-raised font-bold animate-pulse"
               onClick={handleGoToHalftime}
             >
               Locker Room
@@ -633,7 +644,7 @@ export default function MatchPage() {
                       evt.type,
                     )}`}
                   >
-                    <span className="text-lg leading-none mt-0.5">
+                    <span className="mt-0.5 shrink-0">
                       {eventIcon(evt.type)}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -654,7 +665,11 @@ export default function MatchPage() {
                     className={`btn btn-xs flex-1 ${paused ? "btn-warning" : "btn-ghost"}`}
                     onClick={() => setPaused(!paused)}
                   >
-                    {paused ? "\u25B6" : "\u23F8"}
+                    {paused ? (
+                      <PlayIcon className="w-3.5 h-3.5" />
+                    ) : (
+                      <PauseIcon className="w-3.5 h-3.5" />
+                    )}
                   </button>
                   {[
                     { label: "1x", ms: 1000 },

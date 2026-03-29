@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { bounceIn, floatLoop } from "@/lib/animations";
+import { SoccerBallIcon } from "@/components/ui";
 
 export default function MainMenu() {
   const iconRef = useRef<HTMLDivElement>(null);
@@ -33,11 +34,13 @@ export default function MainMenu() {
   }, []);
 
   return (
-    <div className="hero min-h-screen bg-gradient-to-b from-green-500 to-green-700">
+    <div className="hero min-h-screen bg-gradient-to-b from-green to-green-dark">
       <div className="hero-content text-center">
         <div className="max-w-md">
           {/* Floating football icon */}
-          <div ref={iconRef} className="text-7xl mb-4 opacity-0">⚽</div>
+          <div ref={iconRef} className="mb-4 opacity-0 flex justify-center">
+            <SoccerBallIcon className="w-20 h-20 text-white/90" />
+          </div>
 
           {/* Title */}
           <h1
@@ -56,7 +59,7 @@ export default function MainMenu() {
             >
               New Game
             </Link>
-            <button className="btn btn-info btn-lg text-lg btn-raised font-bold opacity-50" disabled>
+            <button className="btn btn-secondary btn-lg text-lg btn-raised font-bold opacity-50" disabled>
               Online
             </button>
           </div>

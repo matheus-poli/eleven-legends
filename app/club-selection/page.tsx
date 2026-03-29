@@ -12,13 +12,6 @@ import { useGameStore } from "@/store/game-store";
 
 const COUNTRIES = ["Brasil", "Espa\u00f1a", "England", "Italia"] as const;
 
-const COUNTRY_EMOJI: Record<string, string> = {
-  "Brasil": "\u{1F1E7}\u{1F1F7}",
-  "Espa\u00f1a": "\u{1F1EA}\u{1F1F8}",
-  "England": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}",
-  "Italia": "\u{1F1EE}\u{1F1F9}",
-};
-
 export default function ClubSelectionPage() {
   const router = useRouter();
   const store = useGameStore();
@@ -146,7 +139,7 @@ export default function ClubSelectionPage() {
                   {/* Manage button */}
                   <div className="card-actions mt-2">
                     <button
-                      className="btn btn-success btn-block shadow-md font-bold text-white"
+                      className="btn btn-primary btn-block shadow-md font-bold btn-raised"
                       onClick={() => handleManage(club)}
                     >
                       Manage
