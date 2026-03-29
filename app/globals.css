@@ -1,16 +1,67 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes:
+    eleven --default,
+    dark;
+}
 
+/* ── Duolingo-inspired DaisyUI theme ────────────────────────── */
 @theme {
-  /* Duolingo-inspired palette */
   --color-green: #58CC02;
   --color-green-dark: #58A700;
+  --color-green-light: #89E219;
   --color-blue: #1CB0F6;
   --color-blue-dark: #1899D6;
   --color-red: #FF4B4B;
+  --color-red-dark: #EA2B2B;
   --color-yellow: #FFC800;
+  --color-yellow-dark: #E5B400;
   --color-orange: #FF9600;
   --color-purple: #CE82FF;
-  --color-pitch-green: #2E7D32;
-  --color-pitch-green-light: #388E3C;
+  --color-pitch: #2E7D32;
+  --color-pitch-light: #388E3C;
+  --color-pitch-line: rgba(255, 255, 255, 0.2);
+}
+
+@utility rating-gold { color: #FFD700; }
+@utility rating-silver { color: #C0C0C0; }
+@utility rating-bronze { color: #CD7F32; }
+
+/* ── Pitch field stripes ────────────────────────────────────── */
+.pitch-bg {
+  background: repeating-linear-gradient(
+    180deg,
+    var(--color-pitch) 0px,
+    var(--color-pitch) 60px,
+    var(--color-pitch-light) 60px,
+    var(--color-pitch-light) 120px
+  );
+}
+
+/* ── Player card hover-3d (DaisyUI inspired) ────────────────── */
+.card-3d {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+.card-3d:hover {
+  transform: translateY(-4px) rotateX(2deg) scale(1.03);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Smooth page transitions ────────────────────────────────── */
+.page-enter {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
