@@ -1,2 +1,33 @@
 [tools]
 node = "22"
+
+[tasks.setup]
+description = "Install all dependencies and setup the project"
+run = """
+#!/usr/bin/env bash
+set -e
+echo "==> Installing Node.js 22 via mise..."
+mise install
+echo "==> Installing pnpm..."
+npm install -g pnpm
+echo "==> Installing project dependencies..."
+pnpm install
+echo ""
+echo "✓ Setup complete! Run 'mise run dev' or './el' to start."
+"""
+
+[tasks.dev]
+description = "Start development server"
+run = "pnpm dev"
+
+[tasks.build]
+description = "Production build"
+run = "pnpm build"
+
+[tasks.test]
+description = "Run tests"
+run = "pnpm test"
+
+[tasks.lint]
+description = "Lint code"
+run = "pnpm lint"
