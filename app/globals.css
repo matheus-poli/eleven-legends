@@ -23,10 +23,6 @@
   --color-pitch-line: rgba(255, 255, 255, 0.2);
 }
 
-@utility rating-gold { color: #FFD700; }
-@utility rating-silver { color: #C0C0C0; }
-@utility rating-bronze { color: #CD7F32; }
-
 /* ── Pitch field stripes ────────────────────────────────────── */
 .pitch-bg {
   background: repeating-linear-gradient(
@@ -38,30 +34,98 @@
   );
 }
 
-/* ── Player card hover-3d (DaisyUI inspired) ────────────────── */
+/* ── 3D hover card with mouse-tracking tilt ─────────────────── */
 .card-3d {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   transform-style: preserve-3d;
-  perspective: 800px;
+  will-change: transform;
 }
 .card-3d:hover {
-  transform: translateY(-4px) rotateX(2deg) scale(1.03);
   box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.15),
-    0 4px 8px rgba(0, 0, 0, 0.1);
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* ── Smooth page transitions ────────────────────────────────── */
-.page-enter {
-  animation: fadeSlideIn 0.3s ease-out;
+/* ── Duolingo 3D raised button effect ───────────────────────── */
+.btn-raised {
+  border-bottom: 4px solid rgba(0, 0, 0, 0.2);
+  transition: all 0.1s ease;
 }
-@keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
+.btn-raised:active {
+  border-bottom-width: 1px;
+  transform: translateY(3px);
+}
+
+/* ── Stagger animation for lists ────────────────────────────── */
+.stagger-enter > * {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: staggerFadeIn 0.35s ease-out forwards;
+}
+.stagger-enter > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-enter > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-enter > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger-enter > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger-enter > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger-enter > *:nth-child(6) { animation-delay: 0.18s; }
+.stagger-enter > *:nth-child(7) { animation-delay: 0.21s; }
+.stagger-enter > *:nth-child(8) { animation-delay: 0.24s; }
+.stagger-enter > *:nth-child(9) { animation-delay: 0.27s; }
+.stagger-enter > *:nth-child(10) { animation-delay: 0.30s; }
+.stagger-enter > *:nth-child(n+11) { animation-delay: 0.33s; }
+
+@keyframes staggerFadeIn {
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ── Page transitions ───────────────────────────────────────── */
+.page-enter {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Goal celebration pulse ─────────────────────────────────── */
+.goal-pulse {
+  animation: goalPulse 0.6s ease-out;
+}
+@keyframes goalPulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.08); }
+  60% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/* ── Floating animation for decorative elements ─────────────── */
+.float-gentle {
+  animation: floatGentle 3s ease-in-out infinite;
+}
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ── Drag-and-drop ghost ────────────────────────────────────── */
+.drag-ghost {
+  opacity: 0.8;
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+.drag-source-active {
+  opacity: 0.3;
+}
+
+/* ── Score change flash ─────────────────────────────────────── */
+.score-flash {
+  animation: scoreFlash 0.8s ease-out;
+}
+@keyframes scoreFlash {
+  0% { background-color: rgba(88, 204, 2, 0.5); transform: scale(1.1); }
+  100% { background-color: transparent; transform: scale(1); }
 }
