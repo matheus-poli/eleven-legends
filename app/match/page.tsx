@@ -131,7 +131,7 @@ export default function MatchPage() {
   // Event feed scroll
   const feedRef = useRef<HTMLDivElement>(null);
 
-  // On mount: check if resuming from halftime
+  // On mount: check if resuming from halftime, or redirect if eliminated
   useEffect(() => {
     const existingSession = getMatchSession();
     if (existingSession && existingSession.isSecondHalf) {
@@ -140,8 +140,17 @@ export default function MatchPage() {
       setCtx(getMatchContext());
       setEvents([...existingSession.state.events]);
       setPhase("playing");
+    } else {
+      try {
+        const currentGs = gameState();
+        if (!currentGs.isPlayerInCurrentCompetition()) {
+          router.replace("/hub");
+        }
+      } catch {
+        // Game state not available
+      }
     }
-  }, []);
+  }, [gameState, router]);
 
   // Auto-scroll event feed
   useEffect(() => {

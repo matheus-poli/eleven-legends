@@ -39,6 +39,10 @@ export default function HubPage() {
 
   const config = DAY_CONFIG[day.type];
 
+  // Check if player is still in competition for match days
+  const isMatchDay = day.type === DayType.MatchDay || day.type === DayType.MundialMatchDay;
+  const playerHasMatch = isMatchDay ? gs.isPlayerInCurrentCompetition() : false;
+
   // Upcoming calendar dots (next 14 days)
   const upcomingDays = calendar.slice(dayIndex, dayIndex + 14);
 
@@ -191,7 +195,7 @@ export default function HubPage() {
             </>
           )}
 
-          {day.type === DayType.MatchDay && (
+          {day.type === DayType.MatchDay && playerHasMatch && (
             <button
               className="btn btn-success btn-lg shadow-lg font-bold text-white w-full btn-raised"
               onClick={() => router.push("/match")}
@@ -204,7 +208,21 @@ export default function HubPage() {
             </button>
           )}
 
-          {day.type === DayType.MundialMatchDay && (
+          {day.type === DayType.MatchDay && !playerHasMatch && (
+            <>
+              <div className="text-center text-base-content/50 text-sm mb-2">
+                Your team was eliminated. Other matches will be simulated.
+              </div>
+              <button
+                className="btn btn-info btn-lg shadow-lg font-bold text-white w-full btn-raised"
+                onClick={advanceDay}
+              >
+                Advance Day
+              </button>
+            </>
+          )}
+
+          {day.type === DayType.MundialMatchDay && playerHasMatch && (
             <button
               className="btn btn-warning btn-lg shadow-lg font-bold w-full btn-raised"
               onClick={() => router.push("/match")}
@@ -214,6 +232,20 @@ export default function HubPage() {
               </svg>
               Play Mundial Match
             </button>
+          )}
+
+          {day.type === DayType.MundialMatchDay && !playerHasMatch && (
+            <>
+              <div className="text-center text-base-content/50 text-sm mb-2">
+                Your team was eliminated. Other matches will be simulated.
+              </div>
+              <button
+                className="btn btn-info btn-lg shadow-lg font-bold text-white w-full btn-raised"
+                onClick={advanceDay}
+              >
+                Advance Day
+              </button>
+            </>
           )}
 
           {day.type === DayType.TransferWindow && (

@@ -117,6 +117,16 @@ export class CompetitionManager {
   }
 
   /**
+   * Returns true if the given team is still alive in its national bracket.
+   */
+  isTeamInNationals(teamId: number): boolean {
+    for (const bracket of this.nationalBracketsMap.values()) {
+      if (bracket.hasTeam(teamId)) return true;
+    }
+    return false;
+  }
+
+  /**
    * Returns true if all national brackets are finished.
    */
   areNationalsFinished(): boolean {

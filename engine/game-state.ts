@@ -229,6 +229,22 @@ export class GameState {
   }
 
   /**
+   * Returns true if the player's club is still alive in the current competition phase.
+   * Use this to decide whether to show "Play Match" or "Advance Day" in the UI.
+   */
+  isPlayerInCurrentCompetition(): boolean {
+    const day = this.currentDay;
+    if (day.type === DayType.MatchDay) {
+      return this._competition.isTeamInNationals(this.manager.clubId);
+    }
+    if (day.type === DayType.MundialMatchDay) {
+      const mb = this._competition.mundialBracket;
+      return mb !== null && mb.hasTeam(this.manager.clubId);
+    }
+    return false;
+  }
+
+  /**
    * Prepares match day: generates fixtures, simulates all non-player matches.
    * Returns the player's fixture (if any) and all fixtures for the day.
    * Use this for interactive mode -- call finishDay() after resolving the player's match.
@@ -258,7 +274,7 @@ export class GameState {
           f.awayClubId === this.manager.clubId,
       ) ?? null;
 
-    // Simulate all non-player fixtures
+    // Simulate all non-player fixtures (or all fixtures if player is eliminated)
     const otherFixtures = fixtures.filter((f) => f !== playerFixture);
     this._competition.simulateFixtures(otherFixtures, daySeed);
 

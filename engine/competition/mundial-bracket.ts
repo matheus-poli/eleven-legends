@@ -55,10 +55,29 @@ export class MundialBracket {
   }
 
   /**
+   * Returns true if the given team is among those advancing in the current round.
+   */
+  hasTeam(teamId: number): boolean {
+    if (this.isFinished) return false;
+    const teams =
+      this._currentPhase === CompetitionPhase.MundialSemifinals
+        ? this.initialTeamIds
+        : this.advancingTeams;
+    return teams.includes(teamId);
+  }
+
+  /**
    * Generates fixtures for the current phase.
+   * Idempotent: if fixtures for the current phase already exist, returns those instead.
    */
   generateNextRound(startDay: number): MatchFixture[] {
     if (this.isFinished) return [];
+
+    // Prevent duplicate generation
+    const existing = this.fixtures.filter(
+      (f) => f.phase === this._currentPhase,
+    );
+    if (existing.length > 0) return existing;
 
     const teams =
       this._currentPhase === CompetitionPhase.MundialSemifinals
